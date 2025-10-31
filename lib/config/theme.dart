@@ -3,35 +3,35 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// 应用主题配置
 class AppTheme {
-  // 核心色彩方案 - 对应4个能力类别
-  static const Color athleticismColor = Color(0xFFFF6B6B); // 身体 - 活力红橙
-  static const Color awarenessColor = Color(0xFF4ECDC4);   // 意识 - 智慧青蓝
-  static const Color techniqueColor = Color(0xFF95E1D3);   // 技术 - 成长绿青
-  static const Color mindColor = Color(0xFFFFA8E2);        // 心灵 - 温暖粉
+  // 核心色彩方案 - 对应4个能力类别（参考图片配色）
+  static const Color athleticismColor = Color(0xFFE68E46);  // 身体 - 橙色 #e68e46
+  static const Color awarenessColor = Color(0xFF2F504C);    // 意识 - 深青绿 #2f504c
+  static const Color techniqueColor = Color(0xFF563437);    // 技术 - 深酒红 #563437
+  static const Color mindColor = Color(0xFFE7BEBE);         // 心灵 - 浅粉 #e7bebe
 
   // 渐变色列表 - 用于雷达图
   static const List<Color> athleticismGradient = [
-    Color(0xFFFF6B6B),
-    Color(0xFFFF8E53),
-    Color(0xFFFFA07A),
+    Color(0xFFFFA866),  // 浅橙
+    Color(0xFFE68E46),  // 标准橙
+    Color(0xFFCC7A3D),  // 深橙
   ];
 
   static const List<Color> awarenessGradient = [
-    Color(0xFF667EEA),
-    Color(0xFF64B5F6),
-    Color(0xFF4ECDC4),
+    Color(0xFF4A7C76),  // 浅青绿
+    Color(0xFF2F504C),  // 标准青绿
+    Color(0xFF1F3935),  // 深青绿
   ];
 
   static const List<Color> techniqueGradient = [
-    Color(0xFF95E1D3),
-    Color(0xFF5FD4B8),
-    Color(0xFF38D39F),
+    Color(0xFF7A5154),  // 浅酒红
+    Color(0xFF563437),  // 标准酒红
+    Color(0xFF3D2528),  // 深酒红
   ];
 
   static const List<Color> mindGradient = [
-    Color(0xFFFFA8E2),
-    Color(0xFFFF8DC7),
-    Color(0xFFFF6FB5),
+    Color(0xFFF5D8D8),  // 浅粉
+    Color(0xFFE7BEBE),  // 标准粉
+    Color(0xFFD9A4A4),  // 深粉
   ];
 
   /// 获取类别对应的主色

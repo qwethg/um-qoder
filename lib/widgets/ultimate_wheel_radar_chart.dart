@@ -76,33 +76,37 @@ class _RadarChartPainter extends CustomPainter {
   /// 绘制12边形网格
   void _drawGrid(Canvas canvas, Offset center, double radius) {
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
+      ..color = Colors.grey.withOpacity(0.15)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
-    // 绘制同心12边形
+    // 绘制同心12边形，与花瓣边缘对齐
     for (int level = 1; level <= gridLevels; level++) {
       final levelRadius = radius * (level / gridLevels);
       final path = Path();
 
       for (int i = 0; i < 12; i++) {
-        final angle = (i * 30 - 90) * math.pi / 180; // -90度使第一个点在顶部
-        final x = center.dx + levelRadius * math.cos(angle);
-        final y = center.dy + levelRadius * math.sin(angle);
+        // 与花瓣边缘对齐：每个花瓣的边缘角度
+        final angle = (i * 30 - 90 - 15) * math.pi / 180; // 花瓣左边缘
+        final nextAngle = (i * 30 - 90 + 15) * math.pi / 180; // 花瓣右边缘
+        
+        final x1 = center.dx + levelRadius * math.cos(angle);
+        final y1 = center.dy + levelRadius * math.sin(angle);
+        final x2 = center.dx + levelRadius * math.cos(nextAngle);
+        final y2 = center.dy + levelRadius * math.sin(nextAngle);
 
         if (i == 0) {
-          path.moveTo(x, y);
-        } else {
-          path.lineTo(x, y);
+          path.moveTo(x1, y1);
         }
+        path.lineTo(x2, y2);
       }
       path.close();
       canvas.drawPath(path, paint);
     }
 
-    // 绘制从中心发射的12条轴线
+    // 绘制从中心发射的12条轴线（与花瓣边缘对齐）
     for (int i = 0; i < 12; i++) {
-      final angle = (i * 30 - 90) * math.pi / 180;
+      final angle = (i * 30 - 90 - 15) * math.pi / 180; // 花瓣左边缘
       final endX = center.dx + radius * math.cos(angle);
       final endY = center.dy + radius * math.sin(angle);
       canvas.drawLine(center, Offset(endX, endY), paint);
@@ -154,7 +158,7 @@ class _RadarChartPainter extends CustomPainter {
     final totalInCategory = categoryAbilities.length;
     
     // 根据子项在类别中的位置调整色相
-    final hueShift = (abilityIndexInCategory / totalInCategory) * 0.15 - 0.075; // -7.5% 到 +7.5%
+    final hueShift = (abilityIndexInCategory / totalInCategory) * 0.15 - 0.075;
     final adjustedColors = baseColors.map((color) => _adjustColorHue(color, hueShift)).toList();
 
     // 创建完整的花瓣路径
@@ -171,31 +175,25 @@ class _RadarChartPainter extends CustomPainter {
     
     path.close();
 
-    // 使用径向渐变填充
-    final rect = Rect.fromCircle(center: center, radius: maxRadius);
+    // 使用径向渐变填充 + 晕染效果
+    final rect = Rect.fromCircle(center: center, radius: maxRadius * 1.15); // 扩大范围产生晕染
     final gradient = RadialGradient(
       center: Alignment.center,
       radius: 1.0,
       colors: [
-        adjustedColors.first.withOpacity(0.4),  // 中心更透明
-        adjustedColors.last.withOpacity(0.85),   // 边缘更浓
+        adjustedColors.first.withOpacity(0.3),  // 中心更透明
+        adjustedColors.last.withOpacity(0.75),   // 边缘浓郁
+        adjustedColors.last.withOpacity(0.15),   // 外延晕染
       ],
-      stops: const [0.0, 1.0],
+      stops: const [0.0, 0.85, 1.0],
     );
 
     final paint = Paint()
       ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3); // 添加模糊效果
 
     canvas.drawPath(path, paint);
-    
-    // 添加边缘高光效果
-    final borderPaint = Paint()
-      ..color = adjustedColors.last.withOpacity(0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    
-    canvas.drawPath(path, borderPaint);
   }
   
   /// 调整颜色的色相
