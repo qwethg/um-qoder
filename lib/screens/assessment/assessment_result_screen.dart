@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:ultimate_wheel/config/constants.dart';
 import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
+import 'package:ultimate_wheel/services/share_service.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
 
 /// 评估结果页 (03-4)
-class AssessmentResultScreen extends StatelessWidget {
+class AssessmentResultScreen extends StatefulWidget {
   final String assessmentId;
 
   const AssessmentResultScreen({
@@ -18,10 +20,18 @@ class AssessmentResultScreen extends StatelessWidget {
   });
 
   @override
+  State<AssessmentResultScreen> createState() => _AssessmentResultScreenState();
+}
+
+class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
+  final _screenshotController = ScreenshotController();
+  final _shareService = ShareService();
+
+  @override
   Widget build(BuildContext context) {
     return Consumer<AssessmentProvider>(
       builder: (context, assessmentProvider, _) {
-        final assessment = assessmentProvider.getAssessmentById(assessmentId);
+        final assessment = assessmentProvider.getAssessmentById(widget.assessmentId);
 
         if (assessment == null) {
           return Scaffold(
@@ -53,20 +63,47 @@ class AssessmentResultScreen extends StatelessWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.share_outlined),
-                onPressed: () {
-                  // TODO: 分享功能
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('分享功能待开发')),
-                  );
-                },
+                onPressed: () => _handleShare(context, assessment),
+                tooltip: '分享',
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          body: Screenshot(
+            controller: _screenshotController,
+            child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: _buildContent(context, assessment, athleticismScore, awarenessScore, techniqueScore, mindScore),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    assessment,
+    double athleticismScore,
+    double awarenessScore,
+    double techniqueScore,
+    double mindScore,
+  ) {
+    // 计算各类别能力项 IDs
+    final athleticismIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.athleticism)
+        .map((a) => a.id).toList();
+    final awarenessIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.awareness)
+        .map((a) => a.id).toList();
+    final techniqueIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.technique)
+        .map((a) => a.id).toList();
+    final mindIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.mind)
+        .map((a) => a.id).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
                 // 祝贺文字
                 Center(
                   child: Column(
@@ -226,10 +263,17 @@ class AssessmentResultScreen extends StatelessWidget {
                   ],
                 ),
               ],
-            ),
-          ),
-        );
-      },
+            );
+  }
+
+  void _handleShare(BuildContext context, assessment) async {
+    if (assessment == null) return;
+
+    await _shareService.shareAssessment(
+      context: context,
+      screenshotController: _screenshotController,
+      assessmentDate: DateFormat('yyyy-MM-dd HH:mm').format(assessment.createdAt),
+      totalScore: assessment.totalScore,
     );
   }
 

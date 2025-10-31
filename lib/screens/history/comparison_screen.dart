@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:ultimate_wheel/models/assessment.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
+import 'package:ultimate_wheel/services/share_service.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
 import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/config/constants.dart';
@@ -25,6 +27,8 @@ class ComparisonScreen extends StatefulWidget {
 
 class _ComparisonScreenState extends State<ComparisonScreen> {
   String? _selectedAssessmentId;
+  final _screenshotController = ScreenshotController();
+  final _shareService = ShareService();
 
   @override
   void initState() {
@@ -60,15 +64,20 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
               if (selectedAssessment != null)
                 IconButton(
                   icon: const Icon(Icons.share_outlined),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('分享功能待开发')),
-                    );
-                  },
+                  onPressed: () => _shareComparison(
+                    context,
+                    latestAssessment,
+                    selectedAssessment,
+                  ),
+                  tooltip: '分享',
                 ),
             ],
           ),
-          body: SingleChildScrollView(
+          body: Screenshot(
+            controller: _screenshotController,
+            child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,8 +227,28 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
               ],
             ),
           ),
-        );
-      },
+        ),
+      ),
+      );
+    },
+  );
+}
+
+  Future<void> _shareComparison(
+    BuildContext context,
+    latestAssessment,
+    selectedAssessment,
+  ) async {
+    if (latestAssessment == null || selectedAssessment == null) return;
+
+    final difference = latestAssessment.totalScore - selectedAssessment.totalScore;
+
+    await _shareService.shareComparison(
+      context: context,
+      screenshotController: _screenshotController,
+      latestDate: DateFormat('yyyy-MM-dd').format(latestAssessment.createdAt),
+      historicalDate: DateFormat('yyyy-MM-dd').format(selectedAssessment.createdAt),
+      scoreDifference: difference,
     );
   }
 
