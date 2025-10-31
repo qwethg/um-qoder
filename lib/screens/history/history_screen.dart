@@ -28,13 +28,20 @@ class HistoryScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('历史记录'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.show_chart),
+                tooltip: '趋势分析',
+                onPressed: () => context.push('/history/trend'),
+              ),
+            ],
           ),
           body: ListView.builder(
             padding: const EdgeInsets.all(16.0),
             itemCount: assessments.length,
             itemBuilder: (context, index) {
               final assessment = assessments[index];
-              return _buildAssessmentCard(context, assessment);
+              return _buildAssessmentCard(context, assessment, assessments);
             },
           ),
         );
@@ -81,9 +88,12 @@ class HistoryScreen extends StatelessWidget {
   }
 
   /// 评估卡片
-  Widget _buildAssessmentCard(BuildContext context, Assessment assessment) {
+  Widget _buildAssessmentCard(BuildContext context, Assessment assessment, List<Assessment> allAssessments) {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
     final typeText = assessment.type == AssessmentType.deep ? '深度评估' : '快速评估';
+    
+    // 判断是否是最新记录
+    final isLatest = allAssessments.first.id == assessment.id;
     
     // 计算各类别得分
     final athleticismIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.athleticism)
@@ -108,35 +118,58 @@ class HistoryScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        dateFormat.format(assessment.createdAt),
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              dateFormat.format(assessment.createdAt),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (isLatest) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.lightSecondary,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '最新',
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: assessment.type == AssessmentType.deep
-                              ? AppTheme.lightSecondary.withOpacity(0.2)  // 珊瑚粉
-                              : AppTheme.lightPrimary.withOpacity(0.2),   // 雾霾蓝
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          typeText,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
                             color: assessment.type == AssessmentType.deep
-                                ? AppTheme.lightSecondary               // 珊瑚粉
-                                : AppTheme.lightPrimary,                // 雾霾蓝
-                            fontWeight: FontWeight.w500,
+                                ? AppTheme.lightSecondary.withOpacity(0.2)  // 珊瑚粉
+                                : AppTheme.lightPrimary.withOpacity(0.2),   // 雾霾蓝
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            typeText,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: assessment.type == AssessmentType.deep
+                                  ? AppTheme.lightSecondary               // 珊瑚粉
+                                  : AppTheme.lightPrimary,                // 雾霾蓝
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -168,6 +201,22 @@ class HistoryScreen extends StatelessWidget {
                   _buildMiniScoreChip(context, Icons.favorite, assessment.getCategoryScore(mindIds), 3),
                 ],
               ),
+              
+              // 对比按钮（仅最新记录显示）
+              if (isLatest && allAssessments.length > 1) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/history/comparison/${assessment.id}'),
+                    icon: const Icon(Icons.compare_arrows, size: 18),
+                    label: const Text('与历史对比'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -10,6 +10,8 @@ import 'package:ultimate_wheel/screens/assessment/deep_assessment_screen.dart';
 import 'package:ultimate_wheel/screens/assessment/quick_assessment_screen.dart';
 import 'package:ultimate_wheel/screens/assessment/assessment_result_screen.dart';
 import 'package:ultimate_wheel/screens/history/history_screen.dart';
+import 'package:ultimate_wheel/screens/history/comparison_screen.dart';
+import 'package:ultimate_wheel/screens/history/trend_screen.dart';
 import 'package:ultimate_wheel/screens/settings/settings_screen.dart';
 import 'package:ultimate_wheel/screens/main_navigation.dart';
 
@@ -71,6 +73,27 @@ class AppRouter {
               path: '/history',
               name: 'history',
               builder: (context, state) => const HistoryScreen(),
+              routes: [
+                // 趋势分析
+                GoRoute(
+                  path: 'trend',
+                  name: 'trend',
+                  builder: (context, state) => const TrendScreen(),
+                ),
+                // 评估对比
+                GoRoute(
+                  path: 'comparison/:latestId',
+                  name: 'comparison',
+                  builder: (context, state) {
+                    final latestId = state.pathParameters['latestId']!;
+                    final selectedId = state.uri.queryParameters['selectedId'];
+                    return ComparisonScreen(
+                      latestAssessmentId: latestId,
+                      selectedAssessmentId: selectedId,
+                    );
+                  },
+                ),
+              ],
             ),
 
             // 设置
