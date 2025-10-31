@@ -175,25 +175,68 @@ class _RadarChartPainter extends CustomPainter {
     
     path.close();
 
-    // 使用径向渐变填充 + 晕染效果
-    final rect = Rect.fromCircle(center: center, radius: maxRadius * 1.15); // 扩大范围产生晕染
+    // 使用径向渐变填充（取消晕染效果）
+    final rect = Rect.fromCircle(center: center, radius: maxRadius);
     final gradient = RadialGradient(
       center: Alignment.center,
       radius: 1.0,
       colors: [
-        adjustedColors.first.withOpacity(0.3),  // 中心更透明
-        adjustedColors.last.withOpacity(0.75),   // 边缘浓郁
-        adjustedColors.last.withOpacity(0.15),   // 外延晕染
+        adjustedColors.first.withOpacity(0.4),  // 中心透明
+        adjustedColors.last.withOpacity(0.8),    // 边缘浓郁
       ],
-      stops: const [0.0, 0.85, 1.0],
+      stops: const [0.0, 1.0],
     );
 
     final paint = Paint()
       ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3); // 添加模糊效果
+      ..style = PaintingStyle.fill;
 
     canvas.drawPath(path, paint);
+    
+    // 在花瓣内部绘制分数
+    if (score > 0) {
+      _drawScoreInPetal(canvas, center, radius, index, score, adjustedColors.last);
+    }
+  }
+  
+  /// 在花瓣内部绘制分数
+  void _drawScoreInPetal(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    int index,
+    double score,
+    Color petalColor,
+  ) {
+    // 计算花瓣中心位置（在半径的60%处）
+    final angle = (index * 30 - 90) * math.pi / 180; // 花瓣中心角度
+    final scoreRadius = radius * (score / 10.0) * 0.6;
+    final x = center.dx + scoreRadius * math.cos(angle);
+    final y = center.dy + scoreRadius * math.sin(angle);
+    
+    // 选择和谐的文字颜色（根据花瓣颜色明度选择白色或深色）
+    final luminance = petalColor.computeLuminance();
+    final textColor = luminance > 0.5 ? Colors.black.withOpacity(0.7) : Colors.white.withOpacity(0.9);
+    
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: score.toStringAsFixed(1),
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+    
+    textPainter.layout();
+    
+    final offsetX = x - textPainter.width / 2;
+    final offsetY = y - textPainter.height / 2;
+    
+    textPainter.paint(canvas, Offset(offsetX, offsetY));
   }
   
   /// 调整颜色的色相
@@ -244,7 +287,7 @@ class _RadarChartPainter extends CustomPainter {
         text: TextSpan(
           text: ability.name,
           style: textStyle?.copyWith(
-            fontSize: 13,          // 字体更大
+            fontSize: 15,          // 字体再大一点 (13 → 15)
             fontWeight: FontWeight.w600,  // 加粗
             color: labelColor,     // 使用对应颜色
           ),
