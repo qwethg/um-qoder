@@ -92,25 +92,64 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
             ),
             
-            // 指示器
+            // 指示器和导航按钮
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _pages.length,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: _currentPage == index ? 24 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: _currentPage == index
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // 上一页按钮
+                  IconButton(
+                    onPressed: _currentPage > 0
+                        ? () {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        : null,
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  // 页面指示器
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      _pages.length,
+                      (index) => GestureDetector(
+                        onTap: () {
+                          _pageController.animateToPage(
+                            index,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: _currentPage == index ? 24 : 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            color: _currentPage == index
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  // 下一页按钮
+                  IconButton(
+                    onPressed: _currentPage < _pages.length - 1
+                        ? () {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        : null,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
               ),
             ),
             

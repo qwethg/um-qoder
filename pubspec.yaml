@@ -54,6 +54,9 @@ dependencies:
   # 工具
   intl: ^0.19.0
   uuid: ^4.3.3
+  
+  # 字体（本地字体，无需网络）
+  # google_fonts 已移除，使用本地 LXGWWenKaiGBLite
 
 dev_dependencies:
   flutter_test:
