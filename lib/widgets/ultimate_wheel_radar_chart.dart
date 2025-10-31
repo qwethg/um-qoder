@@ -139,64 +139,70 @@ class _RadarChartPainter extends CustomPainter {
     double score,
     int categoryColorIndex,
   ) {
-    final startAngle = (index * 30 - 90 - 15) * math.pi / 180; // 每个花瓣占30度，向左偏移15度居中
-    final sweepAngle = 30 * math.pi / 180; // 30度扇形
-    final maxRadius = radius * (score / 10.0); // 根据分数计算半径
+    final startAngle = (index * 30 - 90 - 15) * math.pi / 180;
+    final sweepAngle = 30 * math.pi / 180;
+    final maxRadius = radius * (score / 10.0);
 
-    // 获取该类别的渐变色
-    final gradientColors = AppTheme.getCategoryGradient(categoryColorIndex);
-
-    // 分段绘制，创建阶梯式渐变效果
-    final steps = (score / 10.0 * gridLevels).ceil(); // 根据分数计算需要绘制的段数
+    // 获取该类别的基础色
+    final baseColors = AppTheme.getCategoryGradient(categoryColorIndex);
     
-    for (int level = 1; level <= steps; level++) {
-      final levelRadius = maxRadius * (level / steps);
-      final prevRadius = level > 1 ? maxRadius * ((level - 1) / steps) : 0.0;
+    // 为同类别的每个子项生成不同的颜色变体
+    final abilities = AbilityConstants.abilities;
+    final ability = abilities[index];
+    final categoryAbilities = AbilityConstants.getAbilitiesByCategory(ability.category);
+    final abilityIndexInCategory = categoryAbilities.indexWhere((a) => a.id == ability.id);
+    final totalInCategory = categoryAbilities.length;
+    
+    // 根据子项在类别中的位置调整色相
+    final hueShift = (abilityIndexInCategory / totalInCategory) * 0.15 - 0.075; // -7.5% 到 +7.5%
+    final adjustedColors = baseColors.map((color) => _adjustColorHue(color, hueShift)).toList();
 
-      // 计算颜色（根据level在渐变色数组中插值）
-      final colorProgress = (level - 1) / (steps > 1 ? steps - 1 : 1);
-      final color = _interpolateColor(gradientColors, colorProgress);
+    // 创建完整的花瓣路径
+    final path = Path();
+    path.moveTo(center.dx, center.dy);
+    
+    // 外弧
+    path.arcTo(
+      Rect.fromCircle(center: center, radius: maxRadius),
+      startAngle,
+      sweepAngle,
+      false,
+    );
+    
+    path.close();
 
-      // 创建扇形路径
-      final path = Path();
-      
-      // 外弧
-      path.arcTo(
-        Rect.fromCircle(center: center, radius: levelRadius),
-        startAngle,
-        sweepAngle,
-        false,
-      );
+    // 使用径向渐变填充
+    final rect = Rect.fromCircle(center: center, radius: maxRadius);
+    final gradient = RadialGradient(
+      center: Alignment.center,
+      radius: 1.0,
+      colors: [
+        adjustedColors.first.withOpacity(0.4),  // 中心更透明
+        adjustedColors.last.withOpacity(0.85),   // 边缘更浓
+      ],
+      stops: const [0.0, 1.0],
+    );
 
-      // 右边线
-      final endAngle = startAngle + sweepAngle;
-      if (level > 1) {
-        path.lineTo(
-          center.dx + prevRadius * math.cos(endAngle),
-          center.dy + prevRadius * math.sin(endAngle),
-        );
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.fill;
 
-        // 内弧
-        path.arcTo(
-          Rect.fromCircle(center: center, radius: prevRadius),
-          endAngle,
-          -sweepAngle,
-          false,
-        );
-      } else {
-        // 第一层，直接连到中心
-        path.lineTo(center.dx, center.dy);
-      }
-
-      path.close();
-
-      // 填充颜色
-      final paint = Paint()
-        ..color = color.withOpacity(0.7)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawPath(path, paint);
-    }
+    canvas.drawPath(path, paint);
+    
+    // 添加边缘高光效果
+    final borderPaint = Paint()
+      ..color = adjustedColors.last.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    
+    canvas.drawPath(path, borderPaint);
+  }
+  
+  /// 调整颜色的色相
+  Color _adjustColorHue(Color color, double hueShift) {
+    final hslColor = HSLColor.fromColor(color);
+    final newHue = (hslColor.hue + hueShift * 360) % 360;
+    return hslColor.withHue(newHue).toColor();
   }
 
   /// 在多个颜色之间插值
@@ -219,7 +225,7 @@ class _RadarChartPainter extends CustomPainter {
   /// 绘制标签
   void _drawLabels(Canvas canvas, Offset center, double radius, Size size) {
     final abilities = AbilityConstants.abilities;
-    final labelRadius = radius * 1.15; // 标签距离中心更远一些
+    final labelRadius = radius * 1.08; // 标签靠近雷达图
 
     for (int i = 0; i < abilities.length; i++) {
       final ability = abilities[i];
@@ -227,13 +233,22 @@ class _RadarChartPainter extends CustomPainter {
       final x = center.dx + labelRadius * math.cos(angle);
       final y = center.dy + labelRadius * math.sin(angle);
 
-      // 绘制emoji
+      // 获取该能力项的颜色
+      final baseColors = AppTheme.getCategoryGradient(ability.category.colorIndex);
+      final categoryAbilities = AbilityConstants.getAbilitiesByCategory(ability.category);
+      final abilityIndexInCategory = categoryAbilities.indexWhere((a) => a.id == ability.id);
+      final totalInCategory = categoryAbilities.length;
+      final hueShift = (abilityIndexInCategory / totalInCategory) * 0.15 - 0.075;
+      final labelColor = _adjustColorHue(baseColors.last, hueShift);
+
+      // 绘制文字（去掉表情符号）
       final textPainter = TextPainter(
         text: TextSpan(
-          text: '${ability.emoji}\n${ability.name}',
+          text: ability.name,
           style: textStyle?.copyWith(
-            fontSize: 10,
-            height: 1.2,
+            fontSize: 13,          // 字体更大
+            fontWeight: FontWeight.w600,  // 加粗
+            color: labelColor,     // 使用对应颜色
           ),
         ),
         textAlign: TextAlign.center,
