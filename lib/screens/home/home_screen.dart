@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:ultimate_wheel/config/constants.dart';
+import 'package:ultimate_wheel/models/ability.dart';
+import 'package:ultimate_wheel/providers/assessment_provider.dart';
 
 /// 首页 (02-1 / 02-2)
 class HomeScreen extends StatelessWidget {
@@ -7,28 +11,46 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: 检查是否有评估历史
-    final hasAssessments = false; // 临时
+    return Consumer<AssessmentProvider>(
+      builder: (context, assessmentProvider, _) {
+        final hasAssessments = assessmentProvider.hasAssessments;
+        final latestAssessment = assessmentProvider.latestAssessment;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('飞盘之轮'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () => context.push('/welcome'),
-            tooltip: '什么是飞盘之轮?',
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('飞盘之轮'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.info_outline),
+                onPressed: () => context.push('/welcome'),
+                tooltip: '什么是飞盘之轮?',
+              ),
+            ],
           ),
-        ],
-      ),
-      body: hasAssessments
-          ? _buildWithAssessments(context)
-          : _buildEmptyState(context),
+          body: hasAssessments && latestAssessment != null
+              ? _buildWithAssessments(context, latestAssessment)
+              : _buildEmptyState(context),
+        );
+      },
     );
   }
 
   /// 有评估记录的首页 (02-2)
-  Widget _buildWithAssessments(BuildContext context) {
+  Widget _buildWithAssessments(BuildContext context, assessment) {
+    // 计算各类别得分
+    final athleticismIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.athleticism)
+        .map((a) => a.id).toList();
+    final awarenessIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.awareness)
+        .map((a) => a.id).toList();
+    final techniqueIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.technique)
+        .map((a) => a.id).toList();
+    final mindIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.mind)
+        .map((a) => a.id).toList();
+
+    final athleticismScore = assessment.getCategoryScore(athleticismIds);
+    final awarenessScore = assessment.getCategoryScore(awarenessIds);
+    final techniqueScore = assessment.getCategoryScore(techniqueIds);
+    final mindScore = assessment.getCategoryScore(mindIds);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -56,7 +78,7 @@ class HomeScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   Text(
-                    '72.5',
+                    assessment.totalScore.toStringAsFixed(1),
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -81,10 +103,10 @@ class HomeScreen extends StatelessWidget {
             crossAxisSpacing: 12,
             childAspectRatio: 2,
             children: [
-              _buildCategoryCard(context, '🏃 身体', 7.5),
-              _buildCategoryCard(context, '🧠 意识', 6.3),
-              _buildCategoryCard(context, '⚙️ 技术', 5.8),
-              _buildCategoryCard(context, '💚 心灵', 8.2),
+              _buildCategoryCard(context, '🏃 身体', athleticismScore),
+              _buildCategoryCard(context, '🧠 意识', awarenessScore),
+              _buildCategoryCard(context, '⚙️ 技术', techniqueScore),
+              _buildCategoryCard(context, '💚 心灵', mindScore),
             ],
           ),
           const SizedBox(height: 24),
@@ -101,8 +123,9 @@ class HomeScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '你在身体素质和心灵层面表现出色，特别是团队协作能力值得称赞。技术方面仍有提升空间，建议加强传盘和接盘的练习。继续保持积极的心态，你正在稳步成长。',
+                  Text(
+                    assessment.overallNote ?? '暂无总体评价',
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),

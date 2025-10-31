@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:ultimate_wheel/providers/preferences_provider.dart';
 
 /// 欢迎界面 (01)
 class WelcomeScreen extends StatefulWidget {
@@ -93,7 +95,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: FilledButton(
-                onPressed: () => context.go('/home'),
+                onPressed: () {
+                  // 标记首次启动完成
+                  Provider.of<PreferencesProvider>(context, listen: false)
+                      .completeFirstLaunch();
+                  context.go('/home');
+                },
                 child: const Text('开始我的飞盘之轮'),
               ),
             ),
