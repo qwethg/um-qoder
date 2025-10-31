@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "ask": [
+      "Read(!D:\\code\\y12_ultimatewheel\\UW-qoder/**)",
+      "Edit(!D:\\code\\y12_ultimatewheel\\UW-qoder/**)"
+    ],
+    "allow": [
+      "Read(D:\\code\\y12_ultimatewheel\\UW-qoder/**)",
+      "Edit(D:\\code\\y12_ultimatewheel\\UW-qoder/**)"
+    ]
+  },
+  "memoryImport": {},
+  "monitoring": {}
+}
