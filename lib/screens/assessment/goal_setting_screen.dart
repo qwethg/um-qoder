@@ -157,16 +157,16 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 10分
-                _buildScoreField(context, ability.id, 10, '🎯 10分 - 理想工峰', color),
+                _buildScoreField(context, ability.id, 10, '10分 - 理想工峰', color, Icons.emoji_events),
                 const SizedBox(height: 12),
                 // 7分
-                _buildScoreField(context, ability.id, 7, '⭐ 7分 - 优秀水平', color),
+                _buildScoreField(context, ability.id, 7, '7分 - 优秀水平', color, Icons.star),
                 const SizedBox(height: 12),
                 // 5分
-                _buildScoreField(context, ability.id, 5, '👍 5分 - 良好水平', color),
+                _buildScoreField(context, ability.id, 5, '5分 - 良好水平', color, Icons.thumb_up),
                 const SizedBox(height: 12),
                 // 3分
-                _buildScoreField(context, ability.id, 3, '🌱 3分 - 基础水平', color),
+                _buildScoreField(context, ability.id, 3, '3分 - 基础水平', color, Icons.local_florist),
               ],
             ),
           ),
@@ -182,16 +182,23 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
     int score,
     String label,
     Color color,
+    IconData icon,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         TextField(
