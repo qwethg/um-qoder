@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/constants.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
+import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
 
 /// 首页 (02-1 / 02-2)
 class HomeScreen extends StatelessWidget {
@@ -58,10 +59,12 @@ class HomeScreen extends StatelessWidget {
         children: [
           // 最新评估的雷达图
           Card(
-            child: Container(
-              height: 300,
-              alignment: Alignment.center,
-              child: const Text('雷达图占位符'),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: UltimateWheelRadarChart(
+                scores: assessment.scores,
+                size: MediaQuery.of(context).size.width - 80,
+              ),
             ),
           ),
           const SizedBox(height: 24),
