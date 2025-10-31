@@ -175,7 +175,7 @@ class _RadarChartPainter extends CustomPainter {
     
     path.close();
 
-    // 使用径向渐变填充（取消晕染效果）
+    // 使用径向渐变填充
     final rect = Rect.fromCircle(center: center, radius: maxRadius);
     final gradient = RadialGradient(
       center: Alignment.center,
@@ -282,7 +282,7 @@ class _RadarChartPainter extends CustomPainter {
       final hueShift = (abilityIndexInCategory / totalInCategory) * 0.15 - 0.075;
       final labelColor = _adjustColorHue(baseColors.last, hueShift);
 
-      // 绘制文字（去掉表情符号）
+      // 绘制文字（不显示图标，只显示文字）
       final textPainter = TextPainter(
         text: TextSpan(
           text: ability.name,

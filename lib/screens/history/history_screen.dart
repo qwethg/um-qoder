@@ -50,9 +50,10 @@ class HistoryScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '📊',
-              style: TextStyle(fontSize: 64),
+            Icon(
+              Icons.bar_chart,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 24),
             Text(
@@ -121,16 +122,17 @@ class HistoryScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: assessment.type == AssessmentType.deep
-                              ? Colors.purple.withOpacity(0.1)
-                              : Colors.blue.withOpacity(0.1),
+                              ? AppTheme.lightSecondary.withOpacity(0.2)  // 珊瑚粉
+                              : AppTheme.lightPrimary.withOpacity(0.2),   // 雾霾蓝
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           typeText,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: assessment.type == AssessmentType.deep
-                                ? Colors.purple
-                                : Colors.blue,
+                                ? AppTheme.lightSecondary               // 珊瑚粉
+                                : AppTheme.lightPrimary,                // 雾霾蓝
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -157,13 +159,13 @@ class HistoryScreen extends StatelessWidget {
               // 分类得分
               Row(
                 children: [
-                  _buildMiniScoreChip(context, '🏃', assessment.getCategoryScore(athleticismIds), 0),
+                  _buildMiniScoreChip(context, Icons.directions_run, assessment.getCategoryScore(athleticismIds), 0),
                   const SizedBox(width: 8),
-                  _buildMiniScoreChip(context, '🧠', assessment.getCategoryScore(awarenessIds), 1),
+                  _buildMiniScoreChip(context, Icons.visibility, assessment.getCategoryScore(awarenessIds), 1),
                   const SizedBox(width: 8),
-                  _buildMiniScoreChip(context, '⚙️', assessment.getCategoryScore(techniqueIds), 2),
+                  _buildMiniScoreChip(context, Icons.build, assessment.getCategoryScore(techniqueIds), 2),
                   const SizedBox(width: 8),
-                  _buildMiniScoreChip(context, '💚', assessment.getCategoryScore(mindIds), 3),
+                  _buildMiniScoreChip(context, Icons.favorite, assessment.getCategoryScore(mindIds), 3),
                 ],
               ),
             ],
@@ -173,7 +175,7 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMiniScoreChip(BuildContext context, String emoji, double score, int colorIndex) {
+  Widget _buildMiniScoreChip(BuildContext context, IconData icon, double score, int colorIndex) {
     final color = AppTheme.getCategoryColor(colorIndex);
     return Expanded(
       child: Container(
@@ -184,11 +186,11 @@ class HistoryScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
+            Icon(icon, size: 16, color: color),
             const SizedBox(height: 4),
             Text(
               score.toStringAsFixed(1),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: color,
               ),

@@ -231,7 +231,11 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       applicationName: 'Ultimate Wheel',
       applicationVersion: '1.0.0',
-      applicationIcon: const Text('🥏', style: TextStyle(fontSize: 48)),
+      applicationIcon: Icon(
+        Icons.sports,
+        size: 48,
+        color: Theme.of(context).colorScheme.primary,
+      ),
       children: [
         const SizedBox(height: 16),
         const Text('飞盘之轮是一个帮助极限飞盘玩家进行自我评估的工具。'),

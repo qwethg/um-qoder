@@ -1,9 +1,11 @@
+import 'package:flutter/material.dart';
+
 /// 能力项模型
 class Ability {
   final String id;
   final String name;
   final String nameEn;
-  final String emoji;
+  final IconData icon;  // 使用Material Icons
   final AbilityCategory category;
   final String description;
   final int order;
@@ -12,7 +14,7 @@ class Ability {
     required this.id,
     required this.name,
     required this.nameEn,
-    required this.emoji,
+    required this.icon,
     required this.category,
     required this.description,
     required this.order,
@@ -55,16 +57,16 @@ extension AbilityCategoryExtension on AbilityCategory {
     }
   }
 
-  String get emoji {
+  IconData get icon {
     switch (this) {
       case AbilityCategory.athleticism:
-        return '🏃';
+        return Icons.directions_run;
       case AbilityCategory.awareness:
-        return '🧠';
+        return Icons.visibility;
       case AbilityCategory.technique:
-        return '⚙️';
+        return Icons.build;
       case AbilityCategory.mind:
-        return '💚';
+        return Icons.favorite;
     }
   }
 

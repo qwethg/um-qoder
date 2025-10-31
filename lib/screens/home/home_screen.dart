@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/constants.dart';
+import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
@@ -98,19 +99,64 @@ class HomeScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 2,
-            children: [
-              _buildCategoryCard(context, '🏃 身体', athleticismScore),
-              _buildCategoryCard(context, '🧠 意识', awarenessScore),
-              _buildCategoryCard(context, '⚙️ 技术', techniqueScore),
-              _buildCategoryCard(context, '💚 心灵', mindScore),
-            ],
+          // 第一行：身体 - 技术（使用IntrinsicHeight确保高度一致）
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildCategoryDetailCard(
+                    context,
+                    assessment,
+                    '身体',
+                    athleticismScore,
+                    0,
+                    athleticismIds,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildCategoryDetailCard(
+                    context,
+                    assessment,
+                    '技术',
+                    techniqueScore,
+                    2,
+                    techniqueIds,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // 第二行：意识 - 心灵（使用IntrinsicHeight确保高度一致）
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildCategoryDetailCard(
+                    context,
+                    assessment,
+                    '意识',
+                    awarenessScore,
+                    1,
+                    awarenessIds,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildCategoryDetailCard(
+                    context,
+                    assessment,
+                    '心灵',
+                    mindScore,
+                    3,
+                    mindIds,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           
@@ -161,10 +207,21 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  '准备好开始\n第一次深度评估了吗？',
-                  style: Theme.of(context).textTheme.titleLarge,
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.self_improvement,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '准备好开始\n第一次深度评估了吗？',
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -181,28 +238,119 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, String title, double score) {
+  Widget _buildCategoryDetailCard(
+    BuildContext context,
+    assessment,
+    String categoryName,
+    double categoryScore,
+    int colorIndex,
+    List<String> abilityIds,
+  ) {
+    final color = AppTheme.getCategoryColor(colorIndex);
+    final gradient = AppTheme.getCategoryGradient(colorIndex);
+    
+    // 获取该类别的所有能力项
+    final abilities = AbilityConstants.abilities
+        .where((a) => abilityIds.contains(a.id))
+        .toList();
+    
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // 最小化高度
           children: [
-            Flexible(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+            // 顶部：左边类别名称，右边总分
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  categoryName,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  categoryScore.toStringAsFixed(1),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              score.toStringAsFixed(1),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const SizedBox(height: 12),
+            
+            // 细项列表
+            ...abilities.asMap().entries.map((entry) {
+              final index = entry.key;
+              final ability = entry.value;
+              final score = assessment.scores[ability.id] ?? 0.0;
+              
+              // 计算该子项的颜色（与雷达图保持一致）
+              final hueShift = (index / abilities.length) * 0.15 - 0.075;
+              final itemColor = _adjustColorHue(gradient.last, hueShift);
+              
+              final isLast = index == abilities.length - 1;
+              
+              return Padding(
+                padding: EdgeInsets.only(bottom: isLast ? 0 : 8.0), // 最后一项不留底部间距
+                child: Row(
+                  children: [
+                    // 文字
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        ability.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: itemColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    
+                    // 横条（进度条）
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: score / 10.0,
+                        backgroundColor: itemColor.withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(itemColor),
+                        minHeight: 6,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    
+                    // 数值
+                    SizedBox(
+                      width: 32,
+                      child: Text(
+                        score.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: itemColor,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),
     );
+  }
+  
+  /// 调整颜色的色相（与雷达图一致）
+  Color _adjustColorHue(Color color, double hueShift) {
+    final hslColor = HSLColor.fromColor(color);
+    final newHue = (hslColor.hue + hueShift * 360) % 360;
+    return hslColor.withHue(newHue).toColor();
   }
 }

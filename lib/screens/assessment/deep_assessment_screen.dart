@@ -63,7 +63,14 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${_categories[_currentPage].emoji} ${_categories[_currentPage].name}'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_categories[_currentPage].icon, size: 20),
+            const SizedBox(width: 8),
+            Text(_categories[_currentPage].name),
+          ],
+        ),
         actions: [
           // 进度指示
           Center(
@@ -110,9 +117,10 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                '🧘',
-                style: const TextStyle(fontSize: 80),
+              Icon(
+                Icons.self_improvement,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 32),
               Text(
@@ -130,21 +138,21 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
               const SizedBox(height: 32),
               _buildPhilosophyCard(
                 context,
-                '💭',
+                Icons.chat_bubble_outline,
                 '内向型评估',
                 '评分的基准不是外部的“职业选手”，\n而是自己内心期望达到的最佳状态',
               ),
               const SizedBox(height: 16),
               _buildPhilosophyCard(
                 context,
-                '🎯',
+                Icons.flag_outlined,
                 '满意度驱动',
                 '分数代表满意度，衡量的是\n现状与目标的差距',
               ),
               const SizedBox(height: 16),
               _buildPhilosophyCard(
                 context,
-                '🌱',
+                Icons.eco_outlined,
                 '过程即仪式',
                 '花 15-20 分钟，沉浸在这个\n专注而温柔的时刻',
               ),
@@ -170,7 +178,7 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
     );
   }
 
-  Widget _buildPhilosophyCard(BuildContext context, String emoji, String title, String description) {
+  Widget _buildPhilosophyCard(BuildContext context, IconData icon, String title, String description) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -179,9 +187,10 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
       ),
       child: Row(
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 32),
+          Icon(
+            icon,
+            size: 28,
+            color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -197,7 +206,7 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -234,9 +243,10 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
                     color: color.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    category.emoji,
-                    style: const TextStyle(fontSize: 48),
+                  child: Icon(
+                    category.icon,
+                    size: 40,
+                    color: color,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -267,7 +277,7 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
               color,
               goalProvider,
             );
-          }).toList(),
+          }),
 
           const SizedBox(height: 24),
 
@@ -332,9 +342,10 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
             // 能力信息
             Row(
               children: [
-                Text(
-                  ability.emoji,
-                  style: const TextStyle(fontSize: 32),
+                Icon(
+                  ability.icon,
+                  size: 28,
+                  color: color,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

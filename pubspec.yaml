@@ -49,7 +49,6 @@ dependencies:
   fl_chart: ^0.69.0
   
   # UI工具
-  google_fonts: ^6.1.0
   flutter_svg: ^2.0.9
   
   # 工具
@@ -81,6 +80,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # 添加字体资源
+  fonts:
+    - family: LXGWWenKaiGBLite
+      fonts:
+        - asset: assets/fonts/LXGWWenKaiGBLite-Regular.ttf
+          weight: 400
 
   # To add assets to your application, add an assets section, like this:
   # assets:

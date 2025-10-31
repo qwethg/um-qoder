@@ -73,7 +73,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
             ...AbilityCategory.values.map((category) {
               final abilities = AbilityConstants.getAbilitiesByCategory(category);
               return _buildCategorySection(context, category, abilities);
-            }).toList(),
+            }),
             
             const SizedBox(height: 80), // 留出底部按钮空间
           ],
@@ -99,16 +99,10 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
           padding: const EdgeInsets.only(bottom: 16.0),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  category.emoji,
-                  style: const TextStyle(fontSize: 20),
-                ),
+              Icon(
+                category.icon,
+                size: 20,
+                color: color,
               ),
               const SizedBox(width: 12),
               Text(
@@ -125,7 +119,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
         // 能力项列表
         ...abilities.map((ability) {
           return _buildAbilityItem(context, ability, color);
-        }).toList(),
+        }),
 
         const SizedBox(height: 32),
       ],
@@ -141,9 +135,10 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       child: ExpansionTile(
-        leading: Text(
-          ability.emoji,
-          style: const TextStyle(fontSize: 24),
+        leading: Icon(
+          ability.icon,
+          size: 24,
+          color: color,
         ),
         title: Text(
           ability.name,
@@ -153,7 +148,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
         ),
         subtitle: Text(
           ability.description,
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
         children: [
           Padding(

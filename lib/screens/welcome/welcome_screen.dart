@@ -18,25 +18,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final List<WelcomePage> _pages = const [
     WelcomePage(
       title: '与理想中的自己对话',
-      emoji: '💭',
+      icon: Icons.chat_bubble_outline,
       description: '这不是与他人的比较\n而是一次与自己的坦诚对话',
       subtitle: '内向型评估 Introverted Assessment',
     ),
     WelcomePage(
       title: '满意度，而非排名',
-      emoji: '🎯',
+      icon: Icons.flag_outlined,
       description: '评分代表你对现状的满意度\n衡量的是现状与目标的差距',
       subtitle: '满意度驱动 Satisfaction-Driven',
     ),
     WelcomePage(
       title: '一场成长的仪式',
-      emoji: '🌱',
+      icon: Icons.eco_outlined,
       description: '花15-20分钟\n沉浸在这个专注而温柔的时刻',
       subtitle: '过程即仪式 Process as a Ritual',
     ),
     WelcomePage(
       title: '平衡即是圆满',
-      emoji: '⚖️',
+      icon: Icons.balance,
       description: '目标不是成为满分的“怪物”\n而是成为更圆满、更平衡的自己',
       subtitle: '平衡与成长 Balance & Growth',
     ),
@@ -152,14 +152,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 /// 欢迎页内容
 class WelcomePage extends StatelessWidget {
   final String title;
-  final String emoji;
+  final IconData icon;
   final String description;
   final String subtitle;
 
   const WelcomePage({
     super.key,
     required this.title,
-    required this.emoji,
+    required this.icon,
     required this.description,
     required this.subtitle,
   });
@@ -171,10 +171,11 @@ class WelcomePage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Emoji
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 80),
+          // 图标
+          Icon(
+            icon,
+            size: 72,
+            color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 32),
           

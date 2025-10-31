@@ -71,9 +71,10 @@ class AssessmentResultScreen extends StatelessWidget {
                 Center(
                   child: Column(
                     children: [
-                      Text(
-                        '🎉',
-                        style: const TextStyle(fontSize: 48),
+                      Icon(
+                        Icons.celebration,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -93,7 +94,7 @@ class AssessmentResultScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         DateFormat('yyyy-MM-dd HH:mm').format(assessment.createdAt),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.outline,
                         ),
                       ),
@@ -137,38 +138,71 @@ class AssessmentResultScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // 分区得分
-                Text(
-                  '分区得分',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
                 const SizedBox(height: 8),
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 2,
-                  children: [
-                    _buildCategoryCard(context, '🏃 身体', athleticismScore, 0),
-                    _buildCategoryCard(context, '🧠 意识', awarenessScore, 1),
-                    _buildCategoryCard(context, '⚙️ 技术', techniqueScore, 2),
-                    _buildCategoryCard(context, '💚 心灵', mindScore, 3),
-                  ],
+                // 2×2布局的分区得分：身体-技术 / 意识-心灵
+                // 第一行：身体 - 技术（使用IntrinsicHeight确保高度一致）
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _buildCategoryDetailCard(
+                          context,
+                          assessment,
+                          '身体',
+                          athleticismScore,
+                          0,
+                          athleticismIds,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildCategoryDetailCard(
+                          context,
+                          assessment,
+                          '技术',
+                          techniqueScore,
+                          2,
+                          techniqueIds,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // 第二行：意识 - 心灵（使用IntrinsicHeight确保高度一致）
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _buildCategoryDetailCard(
+                          context,
+                          assessment,
+                          '意识',
+                          awarenessScore,
+                          1,
+                          awarenessIds,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildCategoryDetailCard(
+                          context,
+                          assessment,
+                          '心灵',
+                          mindScore,
+                          3,
+                          mindIds,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
 
-                // 详细分数
-                Text(
-                  '详细分数',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                ...AbilityConstants.abilities.map((ability) {
-                  final score = assessment.scores[ability.id] ?? 0.0;
-                  return _buildAbilityScoreItem(context, ability, score);
-                }).toList(),
+                // 详细分数（可折叠）
+                _DetailedScoresExpansionTile(assessment: assessment),
                 const SizedBox(height: 24),
 
                 // 操作按钮
@@ -199,36 +233,144 @@ class AssessmentResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, String title, double score, int colorIndex) {
+  Widget _buildCategoryDetailCard(
+    BuildContext context,
+    assessment,
+    String categoryName,
+    double categoryScore,
+    int colorIndex,
+    List<String> abilityIds,
+  ) {
     final color = AppTheme.getCategoryColor(colorIndex);
+    final gradient = AppTheme.getCategoryGradient(colorIndex);
+    
+    // 获取该类别的所有能力项
+    final abilities = AbilityConstants.abilities
+        .where((a) => abilityIds.contains(a.id))
+        .toList();
     
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // 最小化高度
           children: [
-            Flexible(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                score.toStringAsFixed(1),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
+            // 顶部：左边类别名称，右边总分
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  categoryName,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+                Text(
+                  categoryScore.toStringAsFixed(1),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 12),
+            
+            // 细项列表
+            ...abilities.asMap().entries.map((entry) {
+              final index = entry.key;
+              final ability = entry.value;
+              final score = assessment.scores[ability.id] ?? 0.0;
+              
+              // 计算该子项的颜色（与雷达图保持一致）
+              final hueShift = (index / abilities.length) * 0.15 - 0.075;
+              final itemColor = _adjustColorHue(gradient.last, hueShift);
+              
+              final isLast = index == abilities.length - 1;
+              
+              return Padding(
+                padding: EdgeInsets.only(bottom: isLast ? 0 : 8.0), // 最后一项不留底部间距
+                child: Row(
+                  children: [
+                    // 文字
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        ability.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: itemColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    
+                    // 横条（进度条）
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: score / 10.0,
+                        backgroundColor: itemColor.withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(itemColor),
+                        minHeight: 6,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    
+                    // 数值
+                    SizedBox(
+                      width: 32,
+                      child: Text(
+                        score.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: itemColor,
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
+        ),
+      ),
+    );
+  }
+  
+  /// 调整颜色的色相（与雷达图一致）
+  Color _adjustColorHue(Color color, double hueShift) {
+    final hslColor = HSLColor.fromColor(color);
+    final newHue = (hslColor.hue + hueShift * 360) % 360;
+    return hslColor.withHue(newHue).toColor();
+  }
+}
+
+/// 可折叠的详细分数组件
+class _DetailedScoresExpansionTile extends StatelessWidget {
+  final dynamic assessment;
+
+  const _DetailedScoresExpansionTile({required this.assessment});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          title: Text(
+            '详细分数',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          initiallyExpanded: false,
+          children: AbilityConstants.abilities.map((ability) {
+            final score = assessment.scores[ability.id] ?? 0.0;
+            return _buildAbilityScoreItem(context, ability, score);
+          }).toList(),
         ),
       ),
     );
@@ -238,16 +380,17 @@ class AssessmentResultScreen extends StatelessWidget {
     final color = AppTheme.getCategoryColor(ability.category.colorIndex);
     
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
       child: ListTile(
-        leading: Text(
-          ability.emoji,
-          style: const TextStyle(fontSize: 24),
+        leading: Icon(
+          ability.icon,
+          size: 24,
+          color: color,
         ),
         title: Text(ability.name),
         subtitle: Text(
           ability.description,
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

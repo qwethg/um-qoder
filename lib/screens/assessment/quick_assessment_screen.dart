@@ -72,7 +72,7 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                     abilities,
                     goalProvider,
                   );
-                }).toList(),
+                }),
                 
                 const SizedBox(height: 80), // 留出底部按钮空间
               ],
@@ -101,16 +101,10 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
           padding: const EdgeInsets.only(bottom: 16.0),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  category.emoji,
-                  style: const TextStyle(fontSize: 20),
-                ),
+              Icon(
+                category.icon,
+                size: 20,
+                color: color,
               ),
               const SizedBox(width: 12),
               Text(
@@ -132,7 +126,7 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
             color,
             goalProvider,
           );
-        }).toList(),
+        }),
 
         const SizedBox(height: 32),
       ],
@@ -162,9 +156,10 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
             // 能力名称和当前分数
             Row(
               children: [
-                Text(
-                  ability.emoji,
-                  style: const TextStyle(fontSize: 24),
+                Icon(
+                  ability.icon,
+                  size: 22,
+                  color: color,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -179,7 +174,7 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                       ),
                       Text(
                         ability.description,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -257,7 +252,7 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                           ability.id,
                           currentScore.toInt(),
                         ),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),

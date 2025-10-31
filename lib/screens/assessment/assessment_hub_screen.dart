@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ultimate_wheel/config/theme.dart';
 
 /// 评估中心 (03)
 class AssessmentHubScreen extends StatelessWidget {
@@ -18,30 +19,30 @@ class AssessmentHubScreen extends StatelessWidget {
           children: [
             // 目标设定
             _AssessmentCard(
-              emoji: '🎯',
+              icon: Icons.flag,
               title: '目标设定',
               description: '定义你的巅峰：描绘你心中10分的样子',
-              color: const Color(0xFF4ECDC4),
+              color: AppTheme.lightPrimary,        // 雾霾蓝
               onTap: () => context.go('/assessment/goal-setting'),
             ),
             const SizedBox(height: 16),
             
             // 深度评估
             _AssessmentCard(
-              emoji: '🧘',
+              icon: Icons.self_improvement,
               title: '深度评估',
               description: '沉浸式体验：一次与自己对话的完整仪式',
-              color: const Color(0xFF95E1D3),
+              color: AppTheme.lightSecondary,      // 珊瑚粉
               onTap: () => context.go('/assessment/deep'),
             ),
             const SizedBox(height: 16),
             
             // 快速评估
             _AssessmentCard(
-              emoji: '⚡',
+              icon: Icons.speed,
               title: '快速评估',
               description: '快速更新：用5分钟追踪你的即时状态',
-              color: const Color(0xFFFFA8E2),
+              color: const Color(0xFFE8D4A9),      // 中间色调
               onTap: () => context.go('/assessment/quick'),
             ),
           ],
@@ -53,14 +54,14 @@ class AssessmentHubScreen extends StatelessWidget {
 
 /// 评估卡片组件
 class _AssessmentCard extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String title;
   final String description;
   final Color color;
   final VoidCallback onTap;
 
   const _AssessmentCard({
-    required this.emoji,
+    required this.icon,
     required this.title,
     required this.description,
     required this.color,
@@ -87,7 +88,7 @@ class _AssessmentCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Emoji
+              // 图标
               Container(
                 width: 64,
                 height: 64,
@@ -96,9 +97,10 @@ class _AssessmentCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 32),
+                child: Icon(
+                  icon,
+                  size: 32,
+                  color: color,
                 ),
               ),
               const SizedBox(width: 16),
@@ -117,7 +119,7 @@ class _AssessmentCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -129,6 +131,7 @@ class _AssessmentCard extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios,
                 color: color,
+                size: 20,
               ),
             ],
           ),
