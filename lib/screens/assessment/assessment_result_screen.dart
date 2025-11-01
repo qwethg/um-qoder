@@ -278,7 +278,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: TextButton.icon(
-                                  onPressed: () => context.push('/settings'),
+                                  onPressed: () => context.go('/settings'),
                                   icon: const Icon(Icons.settings_outlined),
                                   label: const Text('去设置'),
                                 ),
