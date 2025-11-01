@@ -13,6 +13,7 @@ import 'package:ultimate_wheel/screens/history/history_screen.dart';
 import 'package:ultimate_wheel/screens/history/comparison_screen.dart';
 import 'package:ultimate_wheel/screens/history/trend_screen.dart';
 import 'package:ultimate_wheel/screens/settings/settings_screen.dart';
+import 'package:ultimate_wheel/screens/settings/radar_theme_manager_screen.dart';
 import 'package:ultimate_wheel/screens/main_navigation.dart';
 
 /// 应用路由配置
@@ -101,6 +102,14 @@ class AppRouter {
               path: '/settings',
               name: 'settings',
               builder: (context, state) => const SettingsScreen(),
+              routes: [
+                // 雷达图主题管理
+                GoRoute(
+                  path: 'radar-theme',
+                  name: 'radar-theme',
+                  builder: (context, state) => const RadarThemeManagerScreen(),
+                ),
+              ],
             ),
           ],
         ),

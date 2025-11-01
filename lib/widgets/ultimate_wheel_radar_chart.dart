@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:ultimate_wheel/config/constants.dart';
-import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/models/ability.dart';
+import 'package:ultimate_wheel/models/radar_theme.dart';
 
 /// 花瓣式彩虹渐变雷达图
 class UltimateWheelRadarChart extends StatelessWidget {
@@ -11,6 +11,7 @@ class UltimateWheelRadarChart extends StatelessWidget {
   final bool showLabels;
   final bool showGrid;
   final int gridLevels;
+  final RadarTheme? radarTheme; // 主题，如果为null则使用默认
 
   const UltimateWheelRadarChart({
     super.key,
@@ -19,6 +20,7 @@ class UltimateWheelRadarChart extends StatelessWidget {
     this.showLabels = true,
     this.showGrid = true,
     this.gridLevels = 10,
+    this.radarTheme,
   });
 
   @override
@@ -33,6 +35,7 @@ class UltimateWheelRadarChart extends StatelessWidget {
           showGrid: showGrid,
           gridLevels: gridLevels,
           textStyle: Theme.of(context).textTheme.labelSmall,
+          radarTheme: radarTheme ?? PresetRadarThemes.defaultTheme,
         ),
       ),
     );
@@ -45,6 +48,7 @@ class _RadarChartPainter extends CustomPainter {
   final bool showGrid;
   final int gridLevels;
   final TextStyle? textStyle;
+  final RadarTheme radarTheme;
 
   _RadarChartPainter({
     required this.scores,
@@ -52,6 +56,7 @@ class _RadarChartPainter extends CustomPainter {
     required this.showGrid,
     required this.gridLevels,
     this.textStyle,
+    required this.radarTheme,
   });
 
   @override
@@ -147,8 +152,8 @@ class _RadarChartPainter extends CustomPainter {
     final sweepAngle = 30 * math.pi / 180;
     final maxRadius = radius * (score / 10.0);
 
-    // 获取该类别的基础色
-    final baseColors = AppTheme.getCategoryGradient(categoryColorIndex);
+    // 获取该类别的基础色（从主题获取）
+    final baseColors = radarTheme.getCategoryGradient(categoryColorIndex);
     
     // 为同类别的每个子项生成不同的颜色变体
     final abilities = AbilityConstants.abilities;
@@ -157,8 +162,8 @@ class _RadarChartPainter extends CustomPainter {
     final abilityIndexInCategory = categoryAbilities.indexWhere((a) => a.id == ability.id);
     final totalInCategory = categoryAbilities.length;
     
-    // 根据子项在类别中的位置调整色相
-    final hueShift = (abilityIndexInCategory / totalInCategory) * 0.15 - 0.075;
+    // 根据子项在类别中的位置调整色相（增大区分度）
+    final hueShift = (abilityIndexInCategory / totalInCategory) * 0.25 - 0.125;
     final adjustedColors = baseColors.map((color) => _adjustColorHue(color, hueShift)).toList();
 
     // 创建完整的花瓣路径
@@ -218,11 +223,14 @@ class _RadarChartPainter extends CustomPainter {
     final luminance = petalColor.computeLuminance();
     final textColor = luminance > 0.5 ? Colors.black.withOpacity(0.7) : Colors.white.withOpacity(0.9);
     
+    // 根据雷达图大小调整字体大小（半径 < 100 时使用小字体）
+    final fontSize = radius < 100 ? 9.0 : 12.0;
+    
     final textPainter = TextPainter(
       text: TextSpan(
         text: score.toStringAsFixed(1),
         style: TextStyle(
-          fontSize: 14,
+          fontSize: fontSize,
           fontWeight: FontWeight.bold,
           color: textColor,
         ),
@@ -274,8 +282,8 @@ class _RadarChartPainter extends CustomPainter {
       final x = center.dx + labelRadius * math.cos(angle);
       final y = center.dy + labelRadius * math.sin(angle);
 
-      // 获取该能力项的颜色
-      final baseColors = AppTheme.getCategoryGradient(ability.category.colorIndex);
+      // 获取该能力项的颜色（从主题获取）
+      final baseColors = radarTheme.getCategoryGradient(ability.category.colorIndex);
       final categoryAbilities = AbilityConstants.getAbilitiesByCategory(ability.category);
       final abilityIndexInCategory = categoryAbilities.indexWhere((a) => a.id == ability.id);
       final totalInCategory = categoryAbilities.length;
@@ -311,6 +319,7 @@ class _RadarChartPainter extends CustomPainter {
     return oldDelegate.scores != scores ||
            oldDelegate.showLabels != showLabels ||
            oldDelegate.showGrid != showGrid ||
-           oldDelegate.gridLevels != gridLevels;
+           oldDelegate.gridLevels != gridLevels ||
+           oldDelegate.radarTheme != radarTheme;
   }
 }

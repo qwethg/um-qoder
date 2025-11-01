@@ -559,4 +559,166 @@
 
 ---
 
+## 第十五阶段：AI 智能分析功能 ✅
+
+### 依赖包添加
+- ✅ `http: ^1.5.0` - HTTP 请求
+- ✅ `flutter_markdown: ^0.7.7+1` - Markdown 渲染
+
+### 数据层扩展
+- ✅ StorageService 添加 API Key 存储
+  - `getApiKey()` - 读取 API Key
+  - `setApiKey(String key)` - 保存 API Key
+- ✅ PreferencesProvider 添加 API Key 状态管理
+  - `_apiKey` 状态字段
+  - `updateApiKey(String newKey)` 更新方法
+  - `_loadPreferences()` 加载逻辑
+
+### 设置页 UI 增强
+- ✅ StatelessWidget → StatefulWidget 重构
+- ✅ 新增「AI 设置」区块
+- ✅ API Key 输入框
+  - TextField 组件
+  - obscureText 隐藏输入
+  - 清除按钮
+  - 前缀图标
+- ✅ 保存按钮
+  - 空值校验
+  - SnackBar 反馈
+- ✅ TextEditingController 生命周期管理
+- ✅ didChangeDependencies 初始化 API Key
+
+### AI 服务层（AiService）
+- ✅ 创建 `lib/services/ai_service.dart`
+- ✅ SiliconFlow API 集成
+  - Endpoint: `https://api.siliconflow.cn/v1/chat/completions`
+  - Model: `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`
+- ✅ `generateAnalysis()` 核心方法
+  - 接收参数：当前评估、目标设定、历史评估、API Key
+  - 构建 Messages（System + User）
+  - HTTP POST 请求
+  - JSON 响应解析
+  - 错误处理和自定义异常
+- ✅ Prompt 工程
+  - System Message：角色设定（顶级教练 + 心理学家）
+  - 输出结构定义（总评、分项、行动计划）
+  - Markdown 格式要求
+- ✅ 用户数据整理
+  - 当前评估数据（时间、类型、总分、各项分数）
+  - 用户目标设定（各能力项的 3/5/7/10 分目标）
+  - 历史对比（如有上次评估，显示变化）
+  - 备注信息（能力项备注、整体感受）
+- ✅ 工具方法
+  - `_buildMessagesList()` - 构建消息列表
+  - `_formatDateTime()` - 日期格式化
+  - `_formatScoreDiff()` - 分数差异格式化
+  - `_getCategoryName()` - 类别名称转换
+- ✅ AiServiceException 自定义异常类
+
+### 评估结果页集成
+- ✅ 导入依赖
+  - flutter_markdown
+  - PreferencesProvider
+  - GoalSettingProvider
+  - AiService
+  - GoalSetting 模型
+- ✅ 状态管理
+  - `_isLoadingAi` - 加载状态
+  - `_aiAnalysisResult` - 分析结果
+  - `_aiService` - AI 服务实例
+- ✅ AI 分析按钮卡片
+  - Consumer2 监听 PreferencesProvider 和 GoalSettingProvider
+  - 检查 API Key 是否配置
+  - 按钮状态管理（启用/禁用/加载中）
+  - 加载动画（CircularProgressIndicator）
+  - 未配置时显示「去设置」按钮
+- ✅ `_fetchAiAnalysis()` 方法
+  - 获取上一次评估记录（用于对比）
+  - 收集用户目标设定
+  - 调用 AiService.generateAnalysis()
+  - 加载状态管理
+  - 错误处理和 SnackBar 提示
+  - 重试功能
+- ✅ 加载遮罩 UI
+  - Stack 层级管理
+  - 黑色半透明背景
+  - 居中 Card 加载提示
+  - 进度条 + 提示文字
+- ✅ `_showAiAnalysisResult()` 结果展示
+  - showModalBottomSheet 模态框
+  - DraggableScrollableSheet 可拖拽
+  - 初始高度 90%，最小 50%
+  - 顶部标题栏（主题色背景 + 关闭按钮）
+  - Markdown 渲染
+    - MarkdownStyleSheet 自定义样式
+    - 标题层级样式
+    - 段落和列表样式
+    - 响应主题配色
+
+### Git 提交
+- ✅ Commit: "feat: 实现 AI 智能分析功能 - 用户自带 Key + SiliconFlow DeepSeek"
+- ✅ 已推送到远程仓库
+
+---
+
+## 🎊 AI 智能分析功能特性总结
+
+### 核心亮点
+✨ **用户自带 Key 模式**
+- 无需后端服务器
+- 用户自行申请 SiliconFlow API Key
+- 隐私保护，Key 本地存储
+
+✨ **专业的 AI 教练**
+- DeepSeek-R1-0528-Qwen3-8B 模型
+- 顶级极限飞盘教练 + 运动心理学家角色
+- 结合用户个人目标和历史数据
+
+✨ **结构化分析报告**
+- 📊 总体评价
+- 🎯 分项评价与建议（身体/意识/技术/心灵）
+- 💡 下一步行动计划
+- Markdown 格式，优雅呈现
+
+✨ **完善的用户体验**
+- 一键触发分析
+- 加载状态提示
+- 错误重试机制
+- 可拖拽的全屏展示
+- 响应式主题适配
+
+### 技术实现
+🔧 **数据流转**
+```
+用户评估 → 评估结果页 → 点击 AI 分析按钮 → 
+收集数据（当前评估 + 目标设定 + 历史对比） → 
+AI Service 构建 Prompt → SiliconFlow API 请求 → 
+解析响应 → Markdown 渲染展示
+```
+
+🔧 **Prompt 工程**
+- System Message: 角色设定 + 输出格式
+- User Message: 结构化数据（评估分数 + 目标 + 对比 + 备注）
+- 温度参数: 0.7（平衡创造性和准确性）
+- Max Tokens: 2048（确保完整输出）
+
+🔧 **错误处理**
+- 网络请求异常捕获
+- API 响应状态码检查
+- 数据格式校验
+- 自定义异常类型
+- 用户友好的错误提示
+
+### 使用流程
+1. 用户在「设置 → AI 设置」中输入并保存 SiliconFlow API Key
+2. 完成评估后，在评估结果页看到「AI 智能分析」卡片
+3. 点击「获取 AI 智能分析」按钮
+4. 等待 AI 生成报告（通常 5-10 秒）
+5. 在模态框中阅读完整的 Markdown 格式分析报告
+6. 根据建议制定训练计划
+
+---
+
 ## 🎉 项目开发总结
+
+### 已完成阶段：15/15 ✅

@@ -3,10 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:ultimate_wheel/config/constants.dart';
-import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/models/assessment.dart';
+import 'package:ultimate_wheel/models/radar_theme.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
+import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 
 /// 趋势分析页面 - 折线图展示评估趋势
 class TrendScreen extends StatefulWidget {
@@ -23,16 +24,20 @@ class _TrendScreenState extends State<TrendScreen> {
   // 数据维度选项
   DataDimension _selectedDimension = DataDimension.total;
   
-  // 选中的类别（当维度为category时）
-  AbilityCategory? _selectedCategory;
+  // 选中的类别列表（多选）
+  List<AbilityCategory> _selectedCategories = [];
   
-  // 选中的能力项（当维度为ability时）
-  Ability? _selectedAbility;
+  // 选中的能力项列表（多选）
+  List<Ability> _selectedAbilities = [];
+  
+  // 自定义时间范围
+  DateTimeRange? _customDateRange;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AssessmentProvider>(
-      builder: (context, assessmentProvider, _) {
+    return Consumer2<AssessmentProvider, RadarThemeProvider>(
+      builder: (context, assessmentProvider, themeProvider, _) {
+        final currentTheme = themeProvider.currentTheme;
         final assessments = _filterAssessmentsByTimeRange(
           assessmentProvider.assessments,
           _selectedTimeRange,
@@ -66,7 +71,7 @@ class _TrendScreenState extends State<TrendScreen> {
                 if (_selectedDimension == DataDimension.category)
                   _buildCategorySelector(context),
                 if (_selectedDimension == DataDimension.ability)
-                  _buildAbilitySelector(context),
+                  _buildAbilitySelector(context, currentTheme),
                 if (_selectedDimension == DataDimension.category || 
                     _selectedDimension == DataDimension.ability)
                   const SizedBox(height: 16),
@@ -79,7 +84,7 @@ class _TrendScreenState extends State<TrendScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _getChartTitle(),
+                          '趋势图',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -87,7 +92,7 @@ class _TrendScreenState extends State<TrendScreen> {
                         const SizedBox(height: 24),
                         SizedBox(
                           height: 300,
-                          child: _buildLineChart(context, assessments),
+                          child: _buildLineChart(context, assessments, currentTheme),
                         ),
                       ],
                     ),
@@ -96,7 +101,7 @@ class _TrendScreenState extends State<TrendScreen> {
                 const SizedBox(height: 16),
 
                 // 统计信息
-                _buildStatistics(context, assessments),
+                _buildStatistics(context, assessments, currentTheme),
               ],
             ),
           ),
@@ -152,20 +157,44 @@ class _TrendScreenState extends State<TrendScreen> {
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
-              children: TimeRange.values.map((range) {
-                final isSelected = _selectedTimeRange == range;
-                return ChoiceChip(
-                  label: Text(_getTimeRangeLabel(range)),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
+              runSpacing: 8,
+              children: [
+                ...TimeRange.values.map((range) {
+                  final isSelected = _selectedTimeRange == range && _customDateRange == null;
+                  return ChoiceChip(
+                    label: Text(_getTimeRangeLabel(range)),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedTimeRange = range;
+                          _customDateRange = null;
+                        });
+                      }
+                    },
+                  );
+                }),
+                // 自定义时间范围
+                ChoiceChip(
+                  label: Text(_customDateRange == null 
+                    ? '自定义' 
+                    : '${DateFormat('MM/dd').format(_customDateRange!.start)}-${DateFormat('MM/dd').format(_customDateRange!.end)}'),
+                  selected: _customDateRange != null,
+                  onSelected: (selected) async {
+                    final range = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                      initialDateRange: _customDateRange,
+                    );
+                    if (range != null) {
                       setState(() {
-                        _selectedTimeRange = range;
+                        _customDateRange = range;
                       });
                     }
                   },
-                );
-              }).toList(),
+                ),
+              ],
             ),
           ],
         ),
@@ -200,9 +229,9 @@ class _TrendScreenState extends State<TrendScreen> {
                         _selectedDimension = dimension;
                         // 重置子选择器
                         if (dimension == DataDimension.category) {
-                          _selectedCategory = AbilityCategory.athleticism;
+                          _selectedCategories = [];
                         } else if (dimension == DataDimension.ability) {
-                          _selectedAbility = AbilityConstants.abilities.first;
+                          _selectedAbilities = [];
                         }
                       });
                     }
@@ -220,69 +249,130 @@ class _TrendScreenState extends State<TrendScreen> {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: DropdownButtonFormField<AbilityCategory>(
-          decoration: const InputDecoration(
-            labelText: '选择类别',
-            border: OutlineInputBorder(),
-          ),
-          value: _selectedCategory ?? AbilityCategory.athleticism,
-          items: AbilityCategory.values.map((category) {
-            return DropdownMenuItem(
-              value: category,
-              child: Text(_getCategoryLabel(category)),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedCategory = value;
-            });
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '选择类别（可多选）',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: AbilityCategory.values.map((category) {
+                final isSelected = _selectedCategories.contains(category);
+                final color = context.read<RadarThemeProvider>().currentTheme.getCategoryColor(category.colorIndex);
+                return FilterChip(
+                  label: Text(_getCategoryLabel(category)),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedCategories.add(category);
+                      } else {
+                        _selectedCategories.remove(category);
+                      }
+                    });
+                  },
+                  selectedColor: color.withOpacity(0.3),
+                  checkmarkColor: color,
+                  labelStyle: TextStyle(
+                    color: isSelected ? color : null,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                );
+              }).toList(),
+            ),
+            if (_selectedCategories.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '请至少选择一个类别',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildAbilitySelector(BuildContext context) {
+  Widget _buildAbilitySelector(BuildContext context, RadarTheme currentTheme) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: DropdownButtonFormField<Ability>(
-          decoration: const InputDecoration(
-            labelText: '选择能力项',
-            border: OutlineInputBorder(),
-          ),
-          value: _selectedAbility ?? AbilityConstants.abilities.first,
-          items: AbilityConstants.abilities.map((ability) {
-            return DropdownMenuItem(
-              value: ability,
-              child: Text('${ability.name} (${_getCategoryLabel(ability.category)})'),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedAbility = value;
-            });
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '选择能力项（可多选）',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: AbilityConstants.abilities.map((ability) {
+                final isSelected = _selectedAbilities.contains(ability);
+                final color = currentTheme.getCategoryColor(ability.category.colorIndex);
+                return FilterChip(
+                  label: Text(ability.name),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedAbilities.add(ability);
+                      } else {
+                        _selectedAbilities.remove(ability);
+                      }
+                    });
+                  },
+                  selectedColor: color.withOpacity(0.3),
+                  checkmarkColor: color,
+                  labelStyle: TextStyle(
+                    color: isSelected ? color : null,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                );
+              }).toList(),
+            ),
+            if (_selectedAbilities.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '请至少选择一个能力项',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildLineChart(BuildContext context, List<Assessment> assessments) {
-    final spots = _getDataSpots(assessments);
-    
-    if (spots.isEmpty) {
-      return const Center(child: Text('暂无数据'));
+  Widget _buildLineChart(BuildContext context, List<Assessment> assessments, RadarTheme currentTheme) {
+    if (_selectedDimension == DataDimension.ability && _selectedAbilities.isEmpty) {
+      return const Center(child: Text('请至少选择一个能力项'));
+    }
+    if (_selectedDimension == DataDimension.category && _selectedCategories.isEmpty) {
+      return const Center(child: Text('请至少选择一个类别'));
     }
 
-    final color = _getChartColor();
-    
     return LineChart(
       LineChartData(
         gridData: FlGridData(
           show: true,
           drawVerticalLine: true,
-          horizontalInterval: 2,
+          horizontalInterval: _getHorizontalInterval(),
           verticalInterval: 1,
           getDrawingHorizontalLine: (value) {
             return FlLine(
@@ -329,7 +419,7 @@ class _TrendScreenState extends State<TrendScreen> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: 2,
+              interval: _getHorizontalInterval(),
               reservedSize: 42,
               getTitlesWidget: (value, meta) {
                 return Text(
@@ -350,30 +440,56 @@ class _TrendScreenState extends State<TrendScreen> {
         maxX: (assessments.length - 1).toDouble(),
         minY: 0,
         maxY: _getMaxY(),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            color: color,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) {
-                return FlDotCirclePainter(
-                  radius: 4,
-                  color: color,
-                  strokeWidth: 2,
-                  strokeColor: Theme.of(context).colorScheme.surface,
+        lineBarsData: _getLineBarsData(assessments, currentTheme),
+        extraLinesData: ExtraLinesData(
+          extraLinesOnTop: false,
+          horizontalLines: _selectedDimension == DataDimension.ability && _selectedAbilities.isNotEmpty
+            ? _selectedAbilities.asMap().entries.map((entry) {
+                final ability = entry.value;
+                final color = currentTheme.getCategoryColor(ability.category.colorIndex);
+                final lastScore = assessments.last.scores[ability.id] ?? 0.0;
+                
+                return HorizontalLine(
+                  y: lastScore,
+                  color: Colors.transparent,
+                  label: HorizontalLineLabel(
+                    show: true,
+                    alignment: Alignment.topRight,
+                    padding: const EdgeInsets.only(right: 8, bottom: 2),
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    labelResolver: (line) => ability.name,
+                  ),
                 );
-              },
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              color: color.withOpacity(0.1),
-            ),
-          ),
-        ],
+              }).toList()
+            : _selectedDimension == DataDimension.category && _selectedCategories.isNotEmpty
+              ? _selectedCategories.asMap().entries.map((entry) {
+                  final category = entry.value;
+                  final color = currentTheme.getCategoryColor(category.colorIndex);
+                  final abilityIds = AbilityConstants.getAbilitiesByCategory(category).map((a) => a.id).toList();
+                  final lastScore = assessments.last.getCategoryScore(abilityIds);
+                  
+                  return HorizontalLine(
+                    y: lastScore,
+                    color: Colors.transparent,
+                    label: HorizontalLineLabel(
+                      show: true,
+                      alignment: Alignment.topRight,
+                      padding: const EdgeInsets.only(right: 8, bottom: 2),
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      labelResolver: (line) => _getCategoryLabel(category),
+                    ),
+                  );
+                }).toList()
+              : [],
+        ),
         lineTouchData: LineTouchData(
           enabled: true,
           touchTooltipData: LineTouchTooltipData(
@@ -381,29 +497,125 @@ class _TrendScreenState extends State<TrendScreen> {
             tooltipBorder: BorderSide(
               color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
             ),
-            getTooltipItems: (List<LineBarSpot> touchedSpots) {
-              return touchedSpots.map((spot) {
-                final index = spot.x.toInt();
-                if (index < 0 || index >= assessments.length) {
-                  return null;
-                }
-                final date = assessments[index].createdAt;
-                return LineTooltipItem(
-                  '${DateFormat('yyyy-MM-dd').format(date)}\n${spot.y.toStringAsFixed(1)}',
-                  TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
-                );
-              }).toList();
-            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatistics(BuildContext context, List<Assessment> assessments) {
+  List<LineChartBarData> _getLineBarsData(List<Assessment> assessments, RadarTheme currentTheme) {
+    if (_selectedDimension == DataDimension.ability) {
+      // 多能力项模式
+      return _selectedAbilities.map((ability) {
+        final spots = assessments.asMap().entries.map((entry) {
+          final index = entry.key;
+          final assessment = entry.value;
+          final score = assessment.scores[ability.id] ?? 0.0;
+          return FlSpot(index.toDouble(), score);
+        }).toList();
+        
+        final color = currentTheme.getCategoryColor(ability.category.colorIndex);
+        
+        return LineChartBarData(
+          spots: spots,
+          isCurved: true,
+          color: color,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 4,
+                color: color,
+                strokeWidth: 2,
+                strokeColor: Theme.of(context).colorScheme.surface,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(
+            show: false,
+          ),
+        );
+      }).toList();
+    } else if (_selectedDimension == DataDimension.category) {
+      // 多类别模式
+      return _selectedCategories.map((category) {
+        final spots = assessments.asMap().entries.map((entry) {
+          final index = entry.key;
+          final assessment = entry.value;
+          final abilityIds = AbilityConstants.getAbilitiesByCategory(category).map((a) => a.id).toList();
+          final score = assessment.getCategoryScore(abilityIds);
+          return FlSpot(index.toDouble(), score);
+        }).toList();
+        
+        final color = currentTheme.getCategoryColor(category.colorIndex);
+        
+        return LineChartBarData(
+          spots: spots,
+          isCurved: true,
+          color: color,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 4,
+                color: color,
+                strokeWidth: 2,
+                strokeColor: Theme.of(context).colorScheme.surface,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(
+            show: false,
+          ),
+        );
+      }).toList();
+    } else {
+      // 单线模式（总分或类别）
+      final spots = assessments.asMap().entries.map((entry) {
+        final index = entry.key;
+        final assessment = entry.value;
+        final score = _getScoreForAssessment(assessment);
+        return FlSpot(index.toDouble(), score);
+      }).toList();
+      
+      final color = _getChartColor(currentTheme);
+      
+      return [
+        LineChartBarData(
+          spots: spots,
+          isCurved: true,
+          color: color,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          dotData: FlDotData(
+            show: true,
+            getDotPainter: (spot, percent, barData, index) {
+              return FlDotCirclePainter(
+                radius: 4,
+                color: color,
+                strokeWidth: 2,
+                strokeColor: Theme.of(context).colorScheme.surface,
+              );
+            },
+          ),
+          belowBarData: BarAreaData(
+            show: true,
+            color: color.withOpacity(0.1),
+          ),
+        ),
+      ];
+    }
+  }
+
+  Widget _buildStatistics(BuildContext context, List<Assessment> assessments, RadarTheme currentTheme) {
+    if (_selectedDimension == DataDimension.ability && _selectedAbilities.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     final scores = _getScores(assessments);
     
     if (scores.isEmpty) {
@@ -444,7 +656,7 @@ class _TrendScreenState extends State<TrendScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildStatItem(context, '平均分', avgScore, Icons.analytics, AppTheme.lightPrimary),
+                  child: _buildStatItem(context, '平均分', avgScore, Icons.analytics, currentTheme.getCategoryColor(0)),
                 ),
                 Expanded(
                   child: _buildStatItem(
@@ -505,6 +717,14 @@ class _TrendScreenState extends State<TrendScreen> {
     List<Assessment> assessments,
     TimeRange range,
   ) {
+    // 自定义时间范围优先
+    if (_customDateRange != null) {
+      return assessments.where((a) {
+        return a.createdAt.isAfter(_customDateRange!.start.subtract(const Duration(days: 1))) &&
+               a.createdAt.isBefore(_customDateRange!.end.add(const Duration(days: 1)));
+      }).toList();
+    }
+
     if (range == TimeRange.all) {
       return assessments;
     }
@@ -516,21 +736,31 @@ class _TrendScreenState extends State<TrendScreen> {
       TimeRange.threeMonths => DateTime(now.year, now.month - 3, now.day),
       TimeRange.year => DateTime(now.year - 1, now.month, now.day),
       TimeRange.all => DateTime(2000),
+      TimeRange.custom => DateTime(2000), // 不会到这里
     };
 
     return assessments.where((a) => a.createdAt.isAfter(cutoffDate)).toList();
   }
 
-  List<FlSpot> _getDataSpots(List<Assessment> assessments) {
-    return assessments.asMap().entries.map((entry) {
-      final index = entry.key;
-      final assessment = entry.value;
-      final score = _getScoreForAssessment(assessment);
-      return FlSpot(index.toDouble(), score);
-    }).toList();
-  }
-
   List<double> _getScores(List<Assessment> assessments) {
+    if (_selectedDimension == DataDimension.ability) {
+      // 多能力项模式，返回平均值
+      return assessments.map((a) {
+        if (_selectedAbilities.isEmpty) return 0.0;
+        final sum = _selectedAbilities.fold(0.0, (sum, ability) => sum + (a.scores[ability.id] ?? 0.0));
+        return sum / _selectedAbilities.length;
+      }).toList();
+    } else if (_selectedDimension == DataDimension.category) {
+      // 多类别模式，返回平均值
+      return assessments.map((a) {
+        if (_selectedCategories.isEmpty) return 0.0;
+        final sum = _selectedCategories.fold(0.0, (sum, category) {
+          final abilityIds = AbilityConstants.getAbilitiesByCategory(category).map((a) => a.id).toList();
+          return sum + a.getCategoryScore(abilityIds);
+        });
+        return sum / _selectedCategories.length;
+      }).toList();
+    }
     return assessments.map((a) => _getScoreForAssessment(a)).toList();
   }
 
@@ -538,14 +768,18 @@ class _TrendScreenState extends State<TrendScreen> {
     return switch (_selectedDimension) {
       DataDimension.total => assessment.totalScore,
       DataDimension.category => () {
-        final abilityIds = AbilityConstants.getAbilitiesByCategory(
-          _selectedCategory ?? AbilityCategory.athleticism,
-        ).map((a) => a.id).toList();
-        return assessment.getCategoryScore(abilityIds);
+        if (_selectedCategories.isEmpty) return 0.0;
+        final sum = _selectedCategories.fold(0.0, (sum, category) {
+          final abilityIds = AbilityConstants.getAbilitiesByCategory(category).map((a) => a.id).toList();
+          return sum + assessment.getCategoryScore(abilityIds);
+        });
+        return sum / _selectedCategories.length;
       }(),
-      DataDimension.ability => assessment.scores[
-        (_selectedAbility ?? AbilityConstants.abilities.first).id
-      ] ?? 0.0,
+      DataDimension.ability => () {
+        if (_selectedAbilities.isEmpty) return 0.0;
+        final sum = _selectedAbilities.fold(0.0, (sum, ability) => sum + (assessment.scores[ability.id] ?? 0.0));
+        return sum / _selectedAbilities.length;
+      }(),
     };
   }
 
@@ -557,23 +791,21 @@ class _TrendScreenState extends State<TrendScreen> {
     };
   }
 
-  Color _getChartColor() {
+  double _getHorizontalInterval() {
     return switch (_selectedDimension) {
-      DataDimension.total => AppTheme.lightSecondary,
-      DataDimension.category => AppTheme.getCategoryColor(
-        (_selectedCategory ?? AbilityCategory.athleticism).colorIndex,
-      ),
-      DataDimension.ability => AppTheme.getCategoryColor(
-        (_selectedAbility ?? AbilityConstants.abilities.first).category.colorIndex,
-      ),
+      DataDimension.total => 20,  // 总分：0, 20, 40, 60, 80, 100, 120
+      DataDimension.category => 5, // 类别：0, 5, 10, 15, 20, 25, 30
+      DataDimension.ability => 2,  // 能力项：0, 2, 4, 6, 8, 10
     };
   }
 
-  String _getChartTitle() {
+  Color _getChartColor(RadarTheme currentTheme) {
     return switch (_selectedDimension) {
-      DataDimension.total => '总分趋势',
-      DataDimension.category => '${_getCategoryLabel(_selectedCategory ?? AbilityCategory.athleticism)}类别趋势',
-      DataDimension.ability => '${(_selectedAbility ?? AbilityConstants.abilities.first).name}趋势',
+      DataDimension.total => currentTheme.getCategoryColor(1),
+      DataDimension.category => currentTheme.getCategoryColor(
+        _selectedCategories.isNotEmpty ? _selectedCategories.first.colorIndex : 0,
+      ),
+      DataDimension.ability => currentTheme.getCategoryColor(0),
     };
   }
 
@@ -584,6 +816,7 @@ class _TrendScreenState extends State<TrendScreen> {
       TimeRange.threeMonths => '近三月',
       TimeRange.year => '近一年',
       TimeRange.all => '全部',
+      TimeRange.custom => '自定义',
     };
   }
 
@@ -612,6 +845,7 @@ enum TimeRange {
   threeMonths,
   year,
   all,
+  custom, // 新增自定义
 }
 
 /// 数据维度枚举

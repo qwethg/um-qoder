@@ -4,10 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:ultimate_wheel/models/assessment.dart';
 import 'package:ultimate_wheel/models/ability.dart';
+import 'package:ultimate_wheel/models/radar_theme.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
+import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 import 'package:ultimate_wheel/services/share_service.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
-import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/config/constants.dart';
 
 /// 雷达图对比页面 - 对比两个评估记录
@@ -38,8 +39,9 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AssessmentProvider>(
-      builder: (context, assessmentProvider, _) {
+    return Consumer2<AssessmentProvider, RadarThemeProvider>(
+      builder: (context, assessmentProvider, themeProvider, _) {
+        final currentTheme = themeProvider.currentTheme;
         final latestAssessment = assessmentProvider.getAssessmentById(widget.latestAssessmentId);
         final selectedAssessment = _selectedAssessmentId != null 
             ? assessmentProvider.getAssessmentById(_selectedAssessmentId!)
@@ -102,7 +104,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                           context, 
                           latestAssessment, 
                           '最新记录',
-                          AppTheme.lightSecondary,
+                          PresetRadarThemes.defaultTheme.getCategoryColor(1).withOpacity(0.5),
                           isSelected: true,
                         ),
                         const SizedBox(height: 12),
@@ -127,7 +129,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.history),
                             ),
-                            value: _selectedAssessmentId,
+                            initialValue: _selectedAssessmentId,
                             hint: const Text('请选择一条历史记录'),
                             items: historicalAssessments.map((assessment) {
                               return DropdownMenuItem(
@@ -173,6 +175,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                                 child: UltimateWheelRadarChart(
                                   scores: selectedAssessment.scores,
                                   size: MediaQuery.of(context).size.width - 64,
+                                  radarTheme: currentTheme,
                                 ),
                               ),
                               // 最新记录（顶层，半透明）
@@ -181,6 +184,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                                 child: UltimateWheelRadarChart(
                                   scores: latestAssessment.scores,
                                   size: MediaQuery.of(context).size.width - 64,
+                                  radarTheme: currentTheme,
                                 ),
                               ),
                             ],
@@ -189,9 +193,9 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _buildLegend(context, '历史记录', AppTheme.lightPrimary.withOpacity(0.5)),
+                              _buildLegend(context, '历史记录', currentTheme.getCategoryColor(0).withOpacity(0.5)),
                               const SizedBox(width: 24),
-                              _buildLegend(context, '最新记录', AppTheme.lightSecondary.withOpacity(0.7)),
+                              _buildLegend(context, '最新记录', currentTheme.getCategoryColor(1).withOpacity(0.7)),
                             ],
                           ),
                         ],
@@ -214,6 +218,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                     context,
                     latestAssessment,
                     selectedAssessment,
+                    currentTheme,
                   ),
                   const SizedBox(height: 16),
 
@@ -359,7 +364,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                       latestScore.toStringAsFixed(1),
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.lightSecondary,
+                        color: PresetRadarThemes.defaultTheme.getCategoryColor(1),
                       ),
                     ),
                   ],
@@ -382,7 +387,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                       historicalScore.toStringAsFixed(1),
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.lightPrimary,
+                        color: PresetRadarThemes.defaultTheme.getCategoryColor(0),
                       ),
                     ),
                   ],
@@ -409,6 +414,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
     BuildContext context,
     Assessment latestAssessment,
     Assessment selectedAssessment,
+    RadarTheme currentTheme,
   ) {
     final categories = [
       ('身体', AbilityCategory.athleticism, 0),
@@ -451,6 +457,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                   historicalScore,
                   difference,
                   colorIndex,
+                  currentTheme,
                 ),
               );
             }),
@@ -467,8 +474,9 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
     double historicalScore,
     double difference,
     int colorIndex,
+    RadarTheme currentTheme,
   ) {
-    final color = AppTheme.getCategoryColor(colorIndex);
+    final color = currentTheme.getCategoryColor(colorIndex);
     final isImproved = difference > 0;
     final diffColor = isImproved ? Colors.green : (difference < 0 ? Colors.red : Colors.grey);
 
@@ -583,7 +591,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                 context,
                 item.ability.name,
                 item.difference,
-                AppTheme.getCategoryColor(item.ability.category.colorIndex),
+                PresetRadarThemes.defaultTheme.getCategoryColor(item.ability.category.colorIndex),
               )),
               const SizedBox(height: 16),
             ],
@@ -601,7 +609,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                 context,
                 item.ability.name,
                 item.difference,
-                AppTheme.getCategoryColor(item.ability.category.colorIndex),
+                PresetRadarThemes.defaultTheme.getCategoryColor(item.ability.category.colorIndex),
               )),
             ],
           ],

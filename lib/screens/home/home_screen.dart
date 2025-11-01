@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/constants.dart';
-import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/models/ability.dart';
+import 'package:ultimate_wheel/models/radar_theme.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
+import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
 
 /// 首页 (02-1 / 02-2)
@@ -13,8 +14,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AssessmentProvider>(
-      builder: (context, assessmentProvider, _) {
+    return Consumer2<AssessmentProvider, RadarThemeProvider>(
+      builder: (context, assessmentProvider, themeProvider, _) {
         final hasAssessments = assessmentProvider.hasAssessments;
         final latestAssessment = assessmentProvider.latestAssessment;
 
@@ -30,7 +31,7 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           body: hasAssessments && latestAssessment != null
-              ? _buildWithAssessments(context, latestAssessment)
+              ? _buildWithAssessments(context, latestAssessment, themeProvider.currentTheme)
               : _buildEmptyState(context),
         );
       },
@@ -38,7 +39,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   /// 有评估记录的首页 (02-2)
-  Widget _buildWithAssessments(BuildContext context, assessment) {
+  Widget _buildWithAssessments(BuildContext context, assessment, RadarTheme currentTheme) {
     // 计算各类别得分
     final athleticismIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.athleticism)
         .map((a) => a.id).toList();
@@ -65,6 +66,7 @@ class HomeScreen extends StatelessWidget {
               child: UltimateWheelRadarChart(
                 scores: assessment.scores,
                 size: MediaQuery.of(context).size.width - 80,
+                radarTheme: currentTheme,
               ),
             ),
           ),
@@ -112,6 +114,7 @@ class HomeScreen extends StatelessWidget {
                     athleticismScore,
                     0,
                     athleticismIds,
+                    currentTheme,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -123,6 +126,7 @@ class HomeScreen extends StatelessWidget {
                     techniqueScore,
                     2,
                     techniqueIds,
+                    currentTheme,
                   ),
                 ),
               ],
@@ -142,6 +146,7 @@ class HomeScreen extends StatelessWidget {
                     awarenessScore,
                     1,
                     awarenessIds,
+                    currentTheme,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -153,6 +158,7 @@ class HomeScreen extends StatelessWidget {
                     mindScore,
                     3,
                     mindIds,
+                    currentTheme,
                   ),
                 ),
               ],
@@ -245,9 +251,10 @@ class HomeScreen extends StatelessWidget {
     double categoryScore,
     int colorIndex,
     List<String> abilityIds,
+    RadarTheme currentTheme,
   ) {
-    final color = AppTheme.getCategoryColor(colorIndex);
-    final gradient = AppTheme.getCategoryGradient(colorIndex);
+    final color = currentTheme.getCategoryColor(colorIndex);
+    final gradient = currentTheme.getCategoryGradient(colorIndex);
     
     // 获取该类别的所有能力项
     final abilities = AbilityConstants.abilities

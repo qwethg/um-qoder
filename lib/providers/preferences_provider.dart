@@ -12,15 +12,18 @@ class PreferencesProvider extends ChangeNotifier {
   bool _isFirstLaunch = true;
   ThemeMode _themeMode = ThemeMode.system;
   String _radarChartStyle = 'default';
+  String _apiKey = '';
 
   bool get isFirstLaunch => _isFirstLaunch;
   ThemeMode get themeMode => _themeMode;
   String get radarChartStyle => _radarChartStyle;
+  String get apiKey => _apiKey;
 
   void _loadPreferences() {
     _isFirstLaunch = _storageService.isFirstLaunch;
     _themeMode = _parseThemeMode(_storageService.themeMode);
     _radarChartStyle = _storageService.radarChartStyle;
+    _apiKey = _storageService.apiKey;
     notifyListeners();
   }
 
@@ -42,6 +45,13 @@ class PreferencesProvider extends ChangeNotifier {
   Future<void> setRadarChartStyle(String style) async {
     await _storageService.setRadarChartStyle(style);
     _radarChartStyle = style;
+    notifyListeners();
+  }
+
+  /// 更新 API Key
+  Future<void> updateApiKey(String newKey) async {
+    await _storageService.setApiKey(newKey);
+    _apiKey = newKey;
     notifyListeners();
   }
 

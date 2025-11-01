@@ -3,12 +3,19 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:ultimate_wheel/config/constants.dart';
-import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/models/ability.dart';
+import 'package:ultimate_wheel/models/goal_setting.dart';
+import 'package:ultimate_wheel/models/radar_theme.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
+import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
+import 'package:ultimate_wheel/providers/preferences_provider.dart';
+import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
 import 'package:ultimate_wheel/services/share_service.dart';
+import 'package:ultimate_wheel/services/ai_service.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
+import 'package:ultimate_wheel/widgets/radar_theme_preview.dart';
 
 /// 评估结果页 (03-4)
 class AssessmentResultScreen extends StatefulWidget {
@@ -26,11 +33,17 @@ class AssessmentResultScreen extends StatefulWidget {
 class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
   final _screenshotController = ScreenshotController();
   final _shareService = ShareService();
+  final _aiService = AiService();
+  RadarTheme? _previewTheme; // 分享预览使用的主题
+  
+  // AI 分析状态
+  bool _isLoadingAi = false;
+  String? _aiAnalysisResult;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AssessmentProvider>(
-      builder: (context, assessmentProvider, _) {
+    return Consumer2<AssessmentProvider, RadarThemeProvider>(
+      builder: (context, assessmentProvider, themeProvider, _) {
         final assessment = assessmentProvider.getAssessmentById(widget.assessmentId);
 
         if (assessment == null) {
@@ -57,27 +70,72 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
         final techniqueScore = assessment.getCategoryScore(techniqueIds);
         final mindScore = assessment.getCategoryScore(mindIds);
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('评估结果'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.share_outlined),
-                onPressed: () => _handleShare(context, assessment),
-                tooltip: '分享',
+        final currentTheme = _previewTheme ?? themeProvider.currentTheme;
+        
+        return Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                title: const Text('评估结果'),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.share_outlined),
+                    onPressed: () => _showShareThemeSelector(context, assessment, themeProvider),
+                    tooltip: '分享',
+                  ),
+                ],
               ),
-            ],
-          ),
-          body: Screenshot(
-            controller: _screenshotController,
-            child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: _buildContent(context, assessment, athleticismScore, awarenessScore, techniqueScore, mindScore),
+              body: Screenshot(
+                controller: _screenshotController,
+                child: Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24.0),
+                    child: _buildContent(
+                      context,
+                      assessment,
+                      athleticismScore,
+                      awarenessScore,
+                      techniqueScore,
+                      mindScore,
+                      currentTheme,
+                      assessmentProvider,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+            // AI 加载遮罩
+            if (_isLoadingAi)
+              Container(
+                color: Colors.black54,
+                child: Center(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          Text(
+                            'AI 教练正在为您生成报告...',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '请稍候，这可能需要几秒钟',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
@@ -90,6 +148,8 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
     double awarenessScore,
     double techniqueScore,
     double mindScore,
+    RadarTheme currentTheme,
+    AssessmentProvider assessmentProvider,
   ) {
     // 计算各类别能力项 IDs
     final athleticismIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.athleticism)
@@ -147,8 +207,87 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                     child: UltimateWheelRadarChart(
                       scores: assessment.scores,
                       size: MediaQuery.of(context).size.width - 80,
+                      radarTheme: currentTheme,
                     ),
                   ),
+                ),
+                const SizedBox(height: 24),
+
+                // AI 智能分析按钮
+                Consumer2<PreferencesProvider, GoalSettingProvider>(
+                  builder: (context, prefsProvider, goalProvider, _) {
+                    final hasApiKey = prefsProvider.apiKey.isNotEmpty;
+                    
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.psychology_outlined,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'AI 智能分析',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              hasApiKey 
+                                ? '基于您的评估数据和个人目标，生成专业的分析报告和训练建议'
+                                : '请先在设置中配置 API Key 以启用 AI 功能',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: hasApiKey && !_isLoadingAi
+                                  ? () => _fetchAiAnalysis(
+                                        context,
+                                        assessment,
+                                        assessmentProvider,
+                                        goalProvider,
+                                        prefsProvider,
+                                      )
+                                  : null,
+                                icon: _isLoadingAi
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.auto_awesome),
+                                label: Text(_isLoadingAi ? 'AI 教练分析中...' : '获取 AI 智能分析'),
+                              ),
+                            ),
+                            if (!hasApiKey)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: TextButton.icon(
+                                  onPressed: () => context.push('/settings'),
+                                  icon: const Icon(Icons.settings_outlined),
+                                  label: const Text('去设置'),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
 
@@ -190,6 +329,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                           athleticismScore,
                           0,
                           athleticismIds,
+                          currentTheme,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -201,6 +341,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                           techniqueScore,
                           2,
                           techniqueIds,
+                          currentTheme,
                         ),
                       ),
                     ],
@@ -220,6 +361,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                           awarenessScore,
                           1,
                           awarenessIds,
+                          currentTheme,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -231,6 +373,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                           mindScore,
                           3,
                           mindIds,
+                          currentTheme,
                         ),
                       ),
                     ],
@@ -266,6 +409,31 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
             );
   }
 
+  /// 显示主题选择器并分享
+  Future<void> _showShareThemeSelector(BuildContext context, assessment, RadarThemeProvider themeProvider) async {
+    if (assessment == null) return;
+
+    final selectedTheme = await showModalBottomSheet<RadarTheme?>(
+      context: context,
+      builder: (context) => _ShareThemeSelectorSheet(
+        currentTheme: _previewTheme ?? themeProvider.currentTheme,
+        allThemes: themeProvider.allThemes,
+        assessment: assessment,
+        onThemeChanged: (theme) {
+          setState(() => _previewTheme = theme);
+        },
+      ),
+    );
+
+    if (selectedTheme != null) {
+      // 用户选择了主题并确认分享
+      _handleShare(context, assessment);
+    }
+    
+    // 重置预览主题
+    setState(() => _previewTheme = null);
+  }
+
   void _handleShare(BuildContext context, assessment) async {
     if (assessment == null) return;
 
@@ -284,9 +452,10 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
     double categoryScore,
     int colorIndex,
     List<String> abilityIds,
+    RadarTheme currentTheme,
   ) {
-    final color = AppTheme.getCategoryColor(colorIndex);
-    final gradient = AppTheme.getCategoryGradient(colorIndex);
+    final color = currentTheme.getCategoryColor(colorIndex);
+    final gradient = currentTheme.getCategoryGradient(colorIndex);
     
     // 获取该类别的所有能力项
     final abilities = AbilityConstants.abilities
@@ -392,6 +561,159 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
     final newHue = (hslColor.hue + hueShift * 360) % 360;
     return hslColor.withHue(newHue).toColor();
   }
+
+  /// 获取 AI 分析
+  Future<void> _fetchAiAnalysis(
+    BuildContext context,
+    dynamic assessment,
+    AssessmentProvider assessmentProvider,
+    GoalSettingProvider goalProvider,
+    PreferencesProvider prefsProvider,
+  ) async {
+    setState(() {
+      _isLoadingAi = true;
+      _aiAnalysisResult = null;
+    });
+
+    try {
+      // 获取上一次评估记录（用于对比）
+      final allAssessments = assessmentProvider.assessments;
+      final currentIndex = allAssessments.indexWhere((a) => a.id == assessment.id);
+      final previousAssessment = currentIndex < allAssessments.length - 1
+          ? allAssessments[currentIndex + 1]
+          : null;
+
+      // 获取用户目标设定
+      final goalSettings = <String, GoalSetting>{};
+      for (final ability in AbilityConstants.abilities) {
+        final setting = goalProvider.getGoalSetting(ability.id);
+        if (setting != null) {
+          goalSettings[ability.id] = setting;
+        }
+      }
+
+      // 调用 AI 服务
+      final result = await _aiService.generateAnalysis(
+        currentAssessment: assessment,
+        userGoalSettings: goalSettings,
+        previousAssessment: previousAssessment,
+        apiKey: prefsProvider.apiKey,
+      );
+
+      setState(() {
+        _aiAnalysisResult = result;
+        _isLoadingAi = false;
+      });
+
+      // 显示结果
+      if (context.mounted) {
+        _showAiAnalysisResult(context);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingAi = false;
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('生成分析失败: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: '重试',
+              textColor: Colors.white,
+              onPressed: () => _fetchAiAnalysis(
+                context,
+                assessment,
+                assessmentProvider,
+                goalProvider,
+                prefsProvider,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// 显示 AI 分析结果
+  void _showAiAnalysisResult(BuildContext context) {
+    if (_aiAnalysisResult == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // 顶部标题栏
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'AI 智能分析报告',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ],
+                ),
+              ),
+              // Markdown 内容
+              Expanded(
+                child: Markdown(
+                  controller: scrollController,
+                  data: _aiAnalysisResult!,
+                  styleSheet: MarkdownStyleSheet(
+                    h1: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    h2: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    h3: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    p: Theme.of(context).textTheme.bodyMedium,
+                    listBullet: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  padding: const EdgeInsets.all(16),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// 可折叠的详细分数组件
@@ -421,7 +743,8 @@ class _DetailedScoresExpansionTile extends StatelessWidget {
   }
 
   Widget _buildAbilityScoreItem(BuildContext context, Ability ability, double score) {
-    final color = AppTheme.getCategoryColor(ability.category.colorIndex);
+    // 使用默认主题（详细分数列表不支持主题切换）
+    final color = PresetRadarThemes.defaultTheme.getCategoryColor(ability.category.colorIndex);
     
     return Card(
       margin: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
@@ -450,6 +773,111 @@ class _DetailedScoresExpansionTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// 分享主题选择器
+class _ShareThemeSelectorSheet extends StatefulWidget {
+  final RadarTheme currentTheme;
+  final List<RadarTheme> allThemes;
+  final dynamic assessment;
+  final Function(RadarTheme) onThemeChanged;
+
+  const _ShareThemeSelectorSheet({
+    required this.currentTheme,
+    required this.allThemes,
+    required this.assessment,
+    required this.onThemeChanged,
+  });
+
+  @override
+  State<_ShareThemeSelectorSheet> createState() => _ShareThemeSelectorSheetState();
+}
+
+class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
+  late RadarTheme _selectedTheme;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTheme = widget.currentTheme;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      height: MediaQuery.of(context).size.height * 0.75, // 限制高度
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 标题
+          Text(
+            '选择主题分享',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // 大预览图（可滚动）
+          Expanded(
+            child: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: UltimateWheelRadarChart(
+                  scores: widget.assessment.scores,
+                  size: 220,
+                  radarTheme: _selectedTheme,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // 主题选择列表（横向滚动）
+          SizedBox(
+            height: 140,
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: widget.allThemes.length,
+                itemBuilder: (context, index) {
+                  final theme = widget.allThemes[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: RadarThemePreview(
+                      theme: theme,
+                      size: 100,
+                      isSelected: theme.id == _selectedTheme.id,
+                      onTap: () {
+                        setState(() => _selectedTheme = theme);
+                        widget.onThemeChanged(theme);
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // 确认按钮
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.pop(context, _selectedTheme),
+              child: const Text('确认分享'),
+            ),
+          ),
+        ],
       ),
     );
   }

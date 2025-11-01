@@ -133,6 +133,16 @@ class StorageService {
     await _preferencesBox.put('radarChartStyle', style);
   }
 
+  /// 获取 AI API Key
+  String get apiKey {
+    return _preferencesBox.get('apiKey', defaultValue: '') as String;
+  }
+
+  /// 设置 AI API Key
+  Future<void> setApiKey(String key) async {
+    await _preferencesBox.put('apiKey', key);
+  }
+
   /// 关闭所有boxes
   Future<void> close() async {
     await _assessmentBox.close();

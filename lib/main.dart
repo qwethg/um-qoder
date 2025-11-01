@@ -7,6 +7,7 @@ import 'package:ultimate_wheel/services/storage_service.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
 import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
 import 'package:ultimate_wheel/providers/preferences_provider.dart';
+import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,15 +19,24 @@ void main() async {
   final storageService = StorageService();
   await storageService.initialize();
   
-  runApp(UltimateWheelApp(storageService: storageService));
+  // 初始化雷达图主题Provider
+  final radarThemeProvider = RadarThemeProvider();
+  await radarThemeProvider.init();
+  
+  runApp(UltimateWheelApp(
+    storageService: storageService,
+    radarThemeProvider: radarThemeProvider,
+  ));
 }
 
 class UltimateWheelApp extends StatelessWidget {
   final StorageService storageService;
+  final RadarThemeProvider radarThemeProvider;
 
   const UltimateWheelApp({
     super.key,
     required this.storageService,
+    required this.radarThemeProvider,
   });
 
   @override
@@ -41,6 +51,9 @@ class UltimateWheelApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => GoalSettingProvider(storageService),
+        ),
+        ChangeNotifierProvider.value(
+          value: radarThemeProvider,
         ),
       ],
       child: Consumer<PreferencesProvider>(
