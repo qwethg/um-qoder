@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _aiService = AiService();
   bool _isLoadingAi = false;
   String? _aiAnalysisResult;
+  bool _showFullAnalysis = false;
 
   @override
   Widget build(BuildContext context) {
@@ -190,28 +191,54 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'AI 智能分析',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _aiAnalysisResult ?? '点击下方按钮，获取 AI 教练为您生成的专业分析报告',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _aiAnalysisResult == null 
-                        ? Theme.of(context).colorScheme.onSurfaceVariant
-                        : null,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (_aiAnalysisResult != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: TextButton(
-                        onPressed: () => _showAiAnalysisResult(context),
-                        child: const Text('查看完整报告'),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.auto_awesome,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'AI 智能分析',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_aiAnalysisResult != null && !_showFullAnalysis)
+                        TextButton(
+                          onPressed: () => setState(() => _showFullAnalysis = true),
+                          child: const Text('展开'),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (_aiAnalysisResult == null)
+                    Text(
+                      '点击下方按钮，获取 AI 教练为您生成的专业分析报告',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    )
+                  else if (!_showFullAnalysis)
+                    Text(
+                      _aiAnalysisResult!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    )
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _aiAnalysisResult!,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () => setState(() => _showFullAnalysis = false),
+                          child: const Text('收起'),
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -523,6 +550,42 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// 提取 AI 分析的关键点
+  String _extractKeyPoints(String fullResult) {
+    // 简单提取前几行关键信息
+    final lines = fullResult.split('\n');
+    
+    // 查找总体评价部分
+    final overviewLines = <String>[];
+    bool inOverview = false;
+    
+    for (final line in lines) {
+      if (line.startsWith('##') && line.contains('总体评价')) {
+        inOverview = true;
+        continue;
+      }
+      
+      if (inOverview) {
+        if (line.startsWith('##') || line.startsWith('---')) {
+          break;
+        }
+        if (line.trim().isNotEmpty && !line.startsWith('-')) {
+          overviewLines.add(line);
+        }
+      }
+    }
+    
+    // 如果没找到总体评价，就取前几行
+    if (overviewLines.isEmpty) {
+      overviewLines.addAll(lines.take(5).where((line) => 
+        line.trim().isNotEmpty && 
+        !line.startsWith('#') &&
+        !line.startsWith('---')));
+    }
+    
+    return overviewLines.join('\n\n');
+  }
+
   /// 显示 AI 分析结果
   void _showAiAnalysisResult(BuildContext context) async {
     // 重新获取完整结果
@@ -532,30 +595,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final latestAssessment = assessmentProvider.latestAssessment;
     
     if (latestAssessment == null) return;
-
-    // 显示加载对话框
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  '加载完整报告中...',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
 
     try {
       // 获取完整报告
@@ -580,91 +619,32 @@ class _HomeScreenState extends State<HomeScreen> {
         apiKey: prefsProvider.apiKey,
       );
 
+      setState(() {
+        // 提取关键信息而不是显示完整 Markdown
+        _aiAnalysisResult = _extractKeyPoints(fullResult);
+        _showFullAnalysis = true; // 直接展开显示完整内容
+      });
+
       if (context.mounted) {
-        Navigator.pop(context); // 关闭加载对话框
-        
-        // 显示完整报告
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          builder: (context) => DraggableScrollableSheet(
-            initialChildSize: 0.9,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            expand: false,
-            builder: (context, scrollController) => Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                children: [
-                  // 顶部标题栏
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'AI 智能分析报告',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Markdown 内容
-                  Expanded(
-                    child: Markdown(
-                      controller: scrollController,
-                      data: fullResult,
-                      styleSheet: MarkdownStyleSheet(
-                        h1: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        h2: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        h3: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        p: Theme.of(context).textTheme.bodyMedium,
-                        listBullet: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      padding: const EdgeInsets.all(16),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('AI 分析报告已生成'),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.pop(context); // 关闭加载对话框
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('加载完整报告失败: $e'),
+            content: Text('生成分析失败: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: '重试',
+              textColor: Colors.white,
+              onPressed: () => _showAiAnalysisResult(context),
+            ),
           ),
         );
       }
