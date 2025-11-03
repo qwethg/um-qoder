@@ -3,14 +3,30 @@ import 'package:http/http.dart' as http;
 import 'package:ultimate_wheel/models/assessment.dart';
 import 'package:ultimate_wheel/models/goal_setting.dart';
 import 'package:ultimate_wheel/models/ability.dart';
+import 'package:ultimate_wheel/models/ai_report.dart';
 import 'package:ultimate_wheel/config/constants.dart';
+import 'package:ultimate_wheel/services/enhanced_ai_service.dart';
+import 'package:ultimate_wheel/services/storage_service.dart';
 
 /// AI 智能分析服务
+/// 
+/// 注意：此服务已升级为增强版本，支持缓存和存储功能。
+/// 为保持向后兼容性，保留了原有的 generateAnalysis 方法。
+/// 建议使用 EnhancedAiService 获得更好的性能和功能。
 class AiService {
   static const String _apiBaseUrl = 'https://api.siliconflow.cn/v1/chat/completions';
   static const String _modelName = 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B';
 
-  /// 生成 AI 分析报告
+  final StorageService? _storageService;
+  EnhancedAiService? _enhancedService;
+
+  AiService([this._storageService]) {
+    if (_storageService != null) {
+      _enhancedService = EnhancedAiService(_storageService!);
+    }
+  }
+
+  /// 生成 AI 分析报告（向后兼容方法）
   /// 
   /// 参数:
   /// - [currentAssessment]: 当前的评估结果
@@ -19,7 +35,125 @@ class AiService {
   /// - [apiKey]: 用户的 API Key
   /// 
   /// 返回: Markdown 格式的分析报告
+  /// 
+  /// 注意：如果提供了 StorageService，将自动使用增强版本的缓存和存储功能
   Future<String> generateAnalysis({
+    required Assessment currentAssessment,
+    required Map<String, GoalSetting> userGoalSettings,
+    Assessment? previousAssessment,
+    required String apiKey,
+  }) async {
+    // 如果有增强服务，优先使用增强版本
+    if (_enhancedService != null) {
+      try {
+        final report = await _enhancedService!.generateAnalysisReport(
+          currentAssessment: currentAssessment,
+          userGoalSettings: userGoalSettings,
+          previousAssessment: previousAssessment,
+          apiKey: apiKey,
+        );
+        return report.content;
+      } catch (e) {
+        // 如果增强服务失败，回退到原始实现
+        return await _generateAnalysisLegacy(
+          currentAssessment: currentAssessment,
+          userGoalSettings: userGoalSettings,
+          previousAssessment: previousAssessment,
+          apiKey: apiKey,
+        );
+      }
+    }
+
+    // 使用原始实现
+    return await _generateAnalysisLegacy(
+      currentAssessment: currentAssessment,
+      userGoalSettings: userGoalSettings,
+      previousAssessment: previousAssessment,
+      apiKey: apiKey,
+    );
+  }
+
+  /// 生成 AI 分析报告（增强版本）
+  /// 
+  /// 参数:
+  /// - [currentAssessment]: 当前的评估结果
+  /// - [userGoalSettings]: 用户的目标设定（Map&lt;abilityId, GoalSetting&gt;）
+  /// - [previousAssessment]: 上一次的评估结果（可选）
+  /// - [apiKey]: 用户的 API Key
+  /// - [forceRefresh]: 是否强制刷新，忽略缓存
+  /// 
+  /// 返回: AI 分析报告对象（包含完整的元数据）
+  Future<AiReport> generateAnalysisReport({
+    required Assessment currentAssessment,
+    required Map<String, GoalSetting> userGoalSettings,
+    Assessment? previousAssessment,
+    required String apiKey,
+    bool forceRefresh = false,
+  }) async {
+    if (_enhancedService == null) {
+      throw AiServiceException('增强服务未初始化，请提供 StorageService');
+    }
+
+    return await _enhancedService!.generateAnalysisReport(
+      currentAssessment: currentAssessment,
+      userGoalSettings: userGoalSettings,
+      previousAssessment: previousAssessment,
+      apiKey: apiKey,
+      forceRefresh: forceRefresh,
+    );
+  }
+
+  /// 检查是否存在缓存报告
+  Future<bool> hasCachedReport({
+    required Assessment currentAssessment,
+    required Map<String, GoalSetting> userGoalSettings,
+    Assessment? previousAssessment,
+  }) async {
+    if (_enhancedService == null) return false;
+    
+    return await _enhancedService!.hasCachedReport(
+      currentAssessment: currentAssessment,
+      userGoalSettings: userGoalSettings,
+      previousAssessment: previousAssessment,
+    );
+  }
+
+  /// 获取缓存报告
+  Future<AiReport?> getCachedReport({
+    required Assessment currentAssessment,
+    required Map<String, GoalSetting> userGoalSettings,
+    Assessment? previousAssessment,
+  }) async {
+    if (_enhancedService == null) return null;
+    
+    return await _enhancedService!.getCachedReport(
+      currentAssessment: currentAssessment,
+      userGoalSettings: userGoalSettings,
+      previousAssessment: previousAssessment,
+    );
+  }
+
+  /// 获取评估相关的所有报告
+  List<AiReport> getReportsForAssessment(String assessmentId) {
+    if (_enhancedService == null) return [];
+    return _enhancedService!.getReportsForAssessment(assessmentId);
+  }
+
+  /// 获取报告统计信息
+  AiReportStats? getReportStats() {
+    if (_enhancedService == null) return null;
+    return _enhancedService!.getReportStats();
+  }
+
+  /// 清理过期缓存
+  Future<void> cleanupExpiredCache() async {
+    if (_enhancedService != null) {
+      await _enhancedService!.cleanupExpiredCache();
+    }
+  }
+
+  /// 原始的生成分析方法（向后兼容）
+  Future<String> _generateAnalysisLegacy({
     required Assessment currentAssessment,
     required Map<String, GoalSetting> userGoalSettings,
     Assessment? previousAssessment,

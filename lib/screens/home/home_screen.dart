@@ -3,14 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/constants.dart';
 import 'package:ultimate_wheel/models/ability.dart';
-import 'package:ultimate_wheel/models/goal_setting.dart';
 import 'package:ultimate_wheel/models/radar_theme.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
 import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
-import 'package:ultimate_wheel/providers/preferences_provider.dart';
-import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
-import 'package:ultimate_wheel/services/ai_service.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
+import 'package:ultimate_wheel/widgets/ai_analysis_section.dart';
 
 /// 首页 (02-1 / 02-2)
 class HomeScreen extends StatefulWidget {
@@ -21,10 +18,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _aiService = AiService();
-  bool _isLoadingAi = false;
-  String? _aiAnalysisResult;
-  bool _showFullAnalysis = false;
 
   @override
   Widget build(BuildContext context) {
@@ -183,104 +176,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 24),
           
-          // AI 分析结果卡片
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.auto_awesome,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'AI 智能分析',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (_aiAnalysisResult != null && !_showFullAnalysis)
-                        TextButton(
-                          onPressed: () => setState(() => _showFullAnalysis = true),
-                          child: const Text('展开'),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (_aiAnalysisResult == null)
-                    Text(
-                      '点击下方按钮，获取 AI 教练为您生成的专业分析报告',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    )
-                  else if (!_showFullAnalysis)
-                    Text(
-                      _aiAnalysisResult!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    )
-                  else
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _aiAnalysisResult!,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 12),
-                        TextButton(
-                          onPressed: () => setState(() => _showFullAnalysis = false),
-                          child: const Text('收起'),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // AI 分析按钮
-          Consumer2<PreferencesProvider, GoalSettingProvider>(
-            builder: (context, prefsProvider, goalProvider, _) {
-              final hasApiKey = prefsProvider.apiKey.isNotEmpty;
-              
-              return SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: hasApiKey && !_isLoadingAi
-                    ? () => _fetchAiAnalysis(
-                          context,
-                          assessment,
-                          assessmentProvider,
-                          goalProvider,
-                          prefsProvider,
-                        )
-                    : null,
-                  icon: _isLoadingAi
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.auto_awesome),
-                  label: Text(
-                    _isLoadingAi 
-                      ? 'AI 教练分析中...' 
-                      : hasApiKey
-                        ? '获取 AI 智能分析'
-                        : '请先在设置中配置 API Key',
-                  ),
-                ),
-              );
+          // AI 智能分析组件
+          AiAnalysisSection(
+            assessment: assessment,
+            onAssessmentUpdated: (updatedAssessment) {
+              // 更新评估记录
+              assessmentProvider.updateAssessment(updatedAssessment);
             },
           ),
           const SizedBox(height: 24),
@@ -457,196 +358,5 @@ class _HomeScreenState extends State<HomeScreen> {
     final hslColor = HSLColor.fromColor(color);
     final newHue = (hslColor.hue + hueShift * 360) % 360;
     return hslColor.withHue(newHue).toColor();
-  }
-
-  /// 获取 AI 分析
-  Future<void> _fetchAiAnalysis(
-    BuildContext context,
-    dynamic assessment,
-    AssessmentProvider assessmentProvider,
-    GoalSettingProvider goalProvider,
-    PreferencesProvider prefsProvider,
-  ) async {
-    setState(() {
-      _isLoadingAi = true;
-      _aiAnalysisResult = null;
-    });
-
-    try {
-      // 获取上一次评估记录（用于对比）
-      final allAssessments = assessmentProvider.assessments;
-      final currentIndex = allAssessments.indexWhere((a) => a.id == assessment.id);
-      final previousAssessment = currentIndex < allAssessments.length - 1
-          ? allAssessments[currentIndex + 1]
-          : null;
-
-      // 获取用户目标设定
-      final goalSettings = <String, GoalSetting>{};
-      for (final ability in AbilityConstants.abilities) {
-        final setting = goalProvider.getGoalSetting(ability.id);
-        if (setting != null) {
-          goalSettings[ability.id] = setting;
-        }
-      }
-
-      // 调用 AI 服务
-      final result = await _aiService.generateAnalysis(
-        currentAssessment: assessment,
-        userGoalSettings: goalSettings,
-        previousAssessment: previousAssessment,
-        apiKey: prefsProvider.apiKey,
-      );
-
-      setState(() {
-        // 只保存总体评价部分（前3行或前200字）
-        final lines = result.split('\n');
-        final overviewSection = lines.where((line) => 
-          line.isNotEmpty && 
-          !line.startsWith('#') && 
-          !line.startsWith('**') &&
-          !line.contains('分项') &&
-          !line.contains('行动计划')
-        ).take(3).join('\n');
-        _aiAnalysisResult = overviewSection.length > 200 
-          ? '${overviewSection.substring(0, 200)}...'
-          : overviewSection;
-        _isLoadingAi = false;
-      });
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('AI 分析已生成，点击"查看完整报告"查看详情'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _isLoadingAi = false;
-      });
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('生成分析失败: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: '重试',
-              textColor: Colors.white,
-              onPressed: () => _fetchAiAnalysis(
-                context,
-                assessment,
-                assessmentProvider,
-                goalProvider,
-                prefsProvider,
-              ),
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  /// 提取 AI 分析的关键点
-  String _extractKeyPoints(String fullResult) {
-    // 简单提取前几行关键信息
-    final lines = fullResult.split('\n');
-    
-    // 查找总体评价部分
-    final overviewLines = <String>[];
-    bool inOverview = false;
-    
-    for (final line in lines) {
-      if (line.startsWith('##') && line.contains('总体评价')) {
-        inOverview = true;
-        continue;
-      }
-      
-      if (inOverview) {
-        if (line.startsWith('##') || line.startsWith('---')) {
-          break;
-        }
-        if (line.trim().isNotEmpty && !line.startsWith('-')) {
-          overviewLines.add(line);
-        }
-      }
-    }
-    
-    // 如果没找到总体评价，就取前几行
-    if (overviewLines.isEmpty) {
-      overviewLines.addAll(lines.take(5).where((line) => 
-        line.trim().isNotEmpty && 
-        !line.startsWith('#') &&
-        !line.startsWith('---')));
-    }
-    
-    return overviewLines.join('\n\n');
-  }
-
-  /// 显示 AI 分析结果
-  void _showAiAnalysisResult(BuildContext context) async {
-    // 重新获取完整结果
-    final assessmentProvider = Provider.of<AssessmentProvider>(context, listen: false);
-    final goalProvider = Provider.of<GoalSettingProvider>(context, listen: false);
-    final prefsProvider = Provider.of<PreferencesProvider>(context, listen: false);
-    final latestAssessment = assessmentProvider.latestAssessment;
-    
-    if (latestAssessment == null) return;
-
-    try {
-      // 获取完整报告
-      final allAssessments = assessmentProvider.assessments;
-      final currentIndex = allAssessments.indexWhere((a) => a.id == latestAssessment.id);
-      final previousAssessment = currentIndex < allAssessments.length - 1
-          ? allAssessments[currentIndex + 1]
-          : null;
-
-      final goalSettings = <String, GoalSetting>{};
-      for (final ability in AbilityConstants.abilities) {
-        final setting = goalProvider.getGoalSetting(ability.id);
-        if (setting != null) {
-          goalSettings[ability.id] = setting;
-        }
-      }
-
-      final fullResult = await _aiService.generateAnalysis(
-        currentAssessment: latestAssessment,
-        userGoalSettings: goalSettings,
-        previousAssessment: previousAssessment,
-        apiKey: prefsProvider.apiKey,
-      );
-
-      setState(() {
-        // 提取关键信息而不是显示完整 Markdown
-        _aiAnalysisResult = _extractKeyPoints(fullResult);
-        _showFullAnalysis = true; // 直接展开显示完整内容
-      });
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('AI 分析报告已生成'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('生成分析失败: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: '重试',
-              textColor: Colors.white,
-              onPressed: () => _showAiAnalysisResult(context),
-            ),
-          ),
-        );
-      }
-    }
   }
 }

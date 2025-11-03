@@ -23,13 +23,16 @@ class AssessmentAdapter extends TypeAdapter<Assessment> {
       scores: (fields[3] as Map).cast<String, double>(),
       notes: (fields[4] as Map).cast<String, String>(),
       overallNote: fields[5] as String?,
+      aiAnalysisContent: fields[6] as String?,
+      aiAnalysisGeneratedAt: fields[7] as DateTime?,
+      aiAnalysisSummary: fields[8] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Assessment obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +44,13 @@ class AssessmentAdapter extends TypeAdapter<Assessment> {
       ..writeByte(4)
       ..write(obj.notes)
       ..writeByte(5)
-      ..write(obj.overallNote);
+      ..write(obj.overallNote)
+      ..writeByte(6)
+      ..write(obj.aiAnalysisContent)
+      ..writeByte(7)
+      ..write(obj.aiAnalysisGeneratedAt)
+      ..writeByte(8)
+      ..write(obj.aiAnalysisSummary);
   }
 
   @override

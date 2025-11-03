@@ -23,6 +23,15 @@ class Assessment extends HiveObject {
   @HiveField(5)
   final String? overallNote;
 
+  @HiveField(6)
+  final String? aiAnalysisContent; // AI分析报告完整内容
+
+  @HiveField(7)
+  final DateTime? aiAnalysisGeneratedAt; // AI分析生成时间
+
+  @HiveField(8)
+  final String? aiAnalysisSummary; // AI分析摘要（用于折叠显示）
+
   Assessment({
     required this.id,
     required this.createdAt,
@@ -30,6 +39,9 @@ class Assessment extends HiveObject {
     required this.scores,
     this.notes = const {},
     this.overallNote,
+    this.aiAnalysisContent,
+    this.aiAnalysisGeneratedAt,
+    this.aiAnalysisSummary,
   });
 
   /// 计算总分
@@ -53,6 +65,31 @@ class Assessment extends HiveObject {
     
     if (categoryScores.isEmpty) return 0.0;
     return categoryScores.reduce((a, b) => a + b) / categoryScores.length;
+  }
+
+  /// 创建副本并更新指定字段
+  Assessment copyWith({
+    String? id,
+    DateTime? createdAt,
+    AssessmentType? type,
+    Map<String, double>? scores,
+    Map<String, String>? notes,
+    String? overallNote,
+    String? aiAnalysisContent,
+    DateTime? aiAnalysisGeneratedAt,
+    String? aiAnalysisSummary,
+  }) {
+    return Assessment(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      type: type ?? this.type,
+      scores: scores ?? this.scores,
+      notes: notes ?? this.notes,
+      overallNote: overallNote ?? this.overallNote,
+      aiAnalysisContent: aiAnalysisContent ?? this.aiAnalysisContent,
+      aiAnalysisGeneratedAt: aiAnalysisGeneratedAt ?? this.aiAnalysisGeneratedAt,
+      aiAnalysisSummary: aiAnalysisSummary ?? this.aiAnalysisSummary,
+    );
   }
 }
 

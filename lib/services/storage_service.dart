@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:ultimate_wheel/models/assessment.dart';
 import 'package:ultimate_wheel/models/goal_setting.dart';
+import 'package:ultimate_wheel/services/ai_report_storage_service.dart';
 
 /// 本地存储服务
 class StorageService {
@@ -11,6 +12,7 @@ class StorageService {
   late Box<Assessment> _assessmentBox;
   late Box<GoalSetting> _goalSettingBox;
   late Box _preferencesBox;
+  late AiReportStorageService _aiReportStorage;
 
   /// 初始化存储服务
   Future<void> initialize() async {
@@ -29,6 +31,10 @@ class StorageService {
     _assessmentBox = await Hive.openBox<Assessment>(_assessmentBoxName);
     _goalSettingBox = await Hive.openBox<GoalSetting>(_goalSettingBoxName);
     _preferencesBox = await Hive.openBox(_preferencesBoxName);
+
+    // 初始化AI报告存储服务
+    _aiReportStorage = AiReportStorageService();
+    await _aiReportStorage.initialize();
   }
 
   // ============ Assessment 相关 ============
@@ -148,5 +154,11 @@ class StorageService {
     await _assessmentBox.close();
     await _goalSettingBox.close();
     await _preferencesBox.close();
+    await _aiReportStorage.close();
   }
+
+  // ============ AI 报告相关 ============
+
+  /// 获取AI报告存储服务
+  AiReportStorageService get aiReportStorage => _aiReportStorage;
 }
