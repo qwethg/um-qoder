@@ -14,7 +14,7 @@ class AiService {
   /// 
   /// 参数:
   /// - [currentAssessment]: 当前的评估结果
-  /// - [userGoalSettings]: 用户的目标设定（Map<abilityId, GoalSetting>）
+  /// - [userGoalSettings]: 用户的目标设定（Map&lt;abilityId, GoalSetting&gt;）
   /// - [previousAssessment]: 上一次的评估结果（可选）
   /// - [apiKey]: 用户的 API Key
   /// 

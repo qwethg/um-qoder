@@ -1,30 +1,37 @@
-// This is a basic Flutter widget test.
+// Ultimate Wheel 应用基础测试
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// 测试应用的基本功能和组件
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:ultimate_wheel/main.dart';
+import 'package:ultimate_wheel/services/storage_service.dart';
+import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('Ultimate Wheel App Tests', () {
+    setUpAll(() async {
+      // 初始化 Hive 用于测试
+      await Hive.initFlutter();
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    testWidgets('App should build without errors', (WidgetTester tester) async {
+      // 创建测试用的服务
+      final storageService = StorageService();
+      await storageService.initialize();
+      
+      final radarThemeProvider = RadarThemeProvider();
+      await radarThemeProvider.init();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      // 构建应用
+      await tester.pumpWidget(UltimateWheelApp(
+        storageService: storageService,
+        radarThemeProvider: radarThemeProvider,
+      ));
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      // 验证应用能够正常构建
+      expect(find.byType(MaterialApp), findsOneWidget);
+    });
   });
 }

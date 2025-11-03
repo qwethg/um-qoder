@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:ultimate_wheel/config/constants.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/models/goal_setting.dart';

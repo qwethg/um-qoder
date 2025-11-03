@@ -81,7 +81,7 @@ class _RadarChartPainter extends CustomPainter {
   /// 绘制12边形网格
   void _drawGrid(Canvas canvas, Offset center, double radius) {
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.15)
+      ..color = Colors.grey.withValues(alpha: 0.15)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
@@ -186,8 +186,8 @@ class _RadarChartPainter extends CustomPainter {
       center: Alignment.center,
       radius: 1.0,
       colors: [
-        adjustedColors.first.withOpacity(0.4),  // 中心透明
-        adjustedColors.last.withOpacity(0.8),    // 边缘浓郁
+        adjustedColors.first.withValues(alpha: 0.4),  // 中心透明
+        adjustedColors.last.withValues(alpha: 0.8),    // 边缘浓郁
       ],
       stops: const [0.0, 1.0],
     );
@@ -221,7 +221,7 @@ class _RadarChartPainter extends CustomPainter {
     
     // 选择和谐的文字颜色（根据花瓣颜色明度选择白色或深色）
     final luminance = petalColor.computeLuminance();
-    final textColor = luminance > 0.5 ? Colors.black.withOpacity(0.7) : Colors.white.withOpacity(0.9);
+    final textColor = luminance > 0.5 ? Colors.black.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.9);
     
     // 根据雷达图大小调整字体大小（半径 < 100 时使用小字体）
     final fontSize = radius < 100 ? 9.0 : 12.0;
@@ -252,23 +252,6 @@ class _RadarChartPainter extends CustomPainter {
     final hslColor = HSLColor.fromColor(color);
     final newHue = (hslColor.hue + hueShift * 360) % 360;
     return hslColor.withHue(newHue).toColor();
-  }
-
-  /// 在多个颜色之间插值
-  Color _interpolateColor(List<Color> colors, double progress) {
-    if (colors.isEmpty) return Colors.grey;
-    if (colors.length == 1) return colors[0];
-    
-    // 将progress映射到颜色数组的区间
-    final scaledProgress = progress * (colors.length - 1);
-    final index = scaledProgress.floor();
-    final nextIndex = (index + 1).clamp(0, colors.length - 1);
-    final t = scaledProgress - index;
-
-    final color1 = colors[index];
-    final color2 = colors[nextIndex];
-
-    return Color.lerp(color1, color2, t) ?? color1;
   }
 
   /// 绘制标签
