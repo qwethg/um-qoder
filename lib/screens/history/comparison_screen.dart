@@ -169,18 +169,22 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                           Stack(
                             alignment: Alignment.center,
                             children: [
-                              // 历史记录（底层，半透明）
+                              // 历史记录（底层，带描边和灰度效果）
                               Opacity(
-                                opacity: 0.5,
+                                opacity: 0.6,
                                 child: UltimateWheelRadarChart(
                                   scores: selectedAssessment.scores,
                                   size: MediaQuery.of(context).size.width - 64,
                                   radarTheme: currentTheme,
+                                  showStroke: true,
+                                  strokeColor: Colors.grey.withOpacity(0.8),
+                                  strokeWidth: 1.5,
+                                  applyGrayscale: true,
                                 ),
                               ),
-                              // 最新记录（顶层，半透明）
+                              // 最新记录（顶层，正常显示）
                               Opacity(
-                                opacity: 0.7,
+                                opacity: 0.85,
                                 child: UltimateWheelRadarChart(
                                   scores: latestAssessment.scores,
                                   size: MediaQuery.of(context).size.width - 64,
@@ -193,9 +197,9 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _buildLegend(context, '历史记录', currentTheme.getCategoryColor(0).withOpacity(0.5)),
+                              _buildLegend(context, '历史记录', Colors.grey.withOpacity(0.7)),
                               const SizedBox(width: 24),
-                              _buildLegend(context, '最新记录', currentTheme.getCategoryColor(1).withOpacity(0.7)),
+                              _buildLegend(context, '最新记录', currentTheme.getCategoryColor(1).withOpacity(0.85)),
                             ],
                           ),
                         ],

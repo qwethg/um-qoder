@@ -717,29 +717,34 @@ class _TrendScreenState extends State<TrendScreen> {
     List<Assessment> assessments,
     TimeRange range,
   ) {
+    List<Assessment> filtered;
+    
     // 自定义时间范围优先
     if (_customDateRange != null) {
-      return assessments.where((a) {
+      filtered = assessments.where((a) {
         return a.createdAt.isAfter(_customDateRange!.start.subtract(const Duration(days: 1))) &&
                a.createdAt.isBefore(_customDateRange!.end.add(const Duration(days: 1)));
       }).toList();
+    } else if (range == TimeRange.all) {
+      filtered = assessments;
+    } else {
+      final now = DateTime.now();
+      final cutoffDate = switch (range) {
+        TimeRange.week => now.subtract(const Duration(days: 7)),
+        TimeRange.month => DateTime(now.year, now.month - 1, now.day),
+        TimeRange.threeMonths => DateTime(now.year, now.month - 3, now.day),
+        TimeRange.year => DateTime(now.year - 1, now.month, now.day),
+        TimeRange.all => DateTime(2000),
+        TimeRange.custom => DateTime(2000), // 不会到这里
+      };
+
+      filtered = assessments.where((a) => a.createdAt.isAfter(cutoffDate)).toList();
     }
-
-    if (range == TimeRange.all) {
-      return assessments;
-    }
-
-    final now = DateTime.now();
-    final cutoffDate = switch (range) {
-      TimeRange.week => now.subtract(const Duration(days: 7)),
-      TimeRange.month => DateTime(now.year, now.month - 1, now.day),
-      TimeRange.threeMonths => DateTime(now.year, now.month - 3, now.day),
-      TimeRange.year => DateTime(now.year - 1, now.month, now.day),
-      TimeRange.all => DateTime(2000),
-      TimeRange.custom => DateTime(2000), // 不会到这里
-    };
-
-    return assessments.where((a) => a.createdAt.isAfter(cutoffDate)).toList();
+    
+    // 按时间正序排列（早期数据在前，新数据在后）
+    filtered.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    
+    return filtered;
   }
 
   List<double> _getScores(List<Assessment> assessments) {

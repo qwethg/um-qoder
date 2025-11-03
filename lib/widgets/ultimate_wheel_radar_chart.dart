@@ -12,6 +12,10 @@ class UltimateWheelRadarChart extends StatelessWidget {
   final bool showGrid;
   final int gridLevels;
   final RadarTheme? radarTheme; // 主题，如果为null则使用默认
+  final bool showStroke; // 是否显示描边
+  final Color? strokeColor; // 描边颜色
+  final double strokeWidth; // 描边宽度
+  final bool applyGrayscale; // 是否应用灰度效果
 
   const UltimateWheelRadarChart({
     super.key,
@@ -21,11 +25,15 @@ class UltimateWheelRadarChart extends StatelessWidget {
     this.showGrid = true,
     this.gridLevels = 10,
     this.radarTheme,
+    this.showStroke = false,
+    this.strokeColor,
+    this.strokeWidth = 2.0,
+    this.applyGrayscale = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    Widget chart = SizedBox(
       width: size,
       height: size,
       child: CustomPaint(
@@ -36,9 +44,28 @@ class UltimateWheelRadarChart extends StatelessWidget {
           gridLevels: gridLevels,
           textStyle: Theme.of(context).textTheme.labelSmall,
           radarTheme: radarTheme ?? PresetRadarThemes.defaultTheme,
+          showStroke: showStroke,
+          strokeColor: strokeColor ?? Colors.grey.withOpacity(0.6),
+          strokeWidth: strokeWidth,
+          applyGrayscale: applyGrayscale,
         ),
       ),
     );
+
+    // 如果需要应用灰度效果，使用ColorFiltered包装
+    if (applyGrayscale) {
+      chart = ColorFiltered(
+        colorFilter: ColorFilter.matrix([
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0, 0, 0, 1, 0,
+        ]),
+        child: chart,
+      );
+    }
+
+    return chart;
   }
 }
 
@@ -49,6 +76,10 @@ class _RadarChartPainter extends CustomPainter {
   final int gridLevels;
   final TextStyle? textStyle;
   final RadarTheme radarTheme;
+  final bool showStroke;
+  final Color strokeColor;
+  final double strokeWidth;
+  final bool applyGrayscale;
 
   _RadarChartPainter({
     required this.scores,
@@ -57,6 +88,10 @@ class _RadarChartPainter extends CustomPainter {
     required this.gridLevels,
     this.textStyle,
     required this.radarTheme,
+    required this.showStroke,
+    required this.strokeColor,
+    required this.strokeWidth,
+    required this.applyGrayscale,
   });
 
   @override
@@ -198,6 +233,16 @@ class _RadarChartPainter extends CustomPainter {
 
     canvas.drawPath(path, paint);
     
+    // 如果需要描边，绘制描边效果
+    if (showStroke) {
+      final strokePaint = Paint()
+        ..color = strokeColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth;
+      
+      canvas.drawPath(path, strokePaint);
+    }
+    
     // 在花瓣内部绘制分数
     if (score > 0) {
       _drawScoreInPetal(canvas, center, radius, index, score, adjustedColors.last);
@@ -303,6 +348,10 @@ class _RadarChartPainter extends CustomPainter {
            oldDelegate.showLabels != showLabels ||
            oldDelegate.showGrid != showGrid ||
            oldDelegate.gridLevels != gridLevels ||
-           oldDelegate.radarTheme != radarTheme;
+           oldDelegate.radarTheme != radarTheme ||
+           oldDelegate.showStroke != showStroke ||
+           oldDelegate.strokeColor != strokeColor ||
+           oldDelegate.strokeWidth != strokeWidth ||
+           oldDelegate.applyGrayscale != applyGrayscale;
   }
 }

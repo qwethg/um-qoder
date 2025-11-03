@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -56,26 +57,43 @@ class ShareService {
         throw Exception('截图失败');
       }
 
-      // 保存到临时目录
-      final Directory tempDir = await getTemporaryDirectory();
-      final String timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final String fileName = 'ultimate_wheel_$timestamp.png';
-      final File file = File('${tempDir.path}/$fileName');
-      await file.writeAsBytes(imageBytes);
+      final String shareText = '我的Ultimate Wheel评估结果\n评估时间：$assessmentDate\n总分：${totalScore.toStringAsFixed(1)}\n\n#极限飞盘 #UltimateWheel';
 
-      // 分享文件
-      final XFile xFile = XFile(file.path);
-      await Share.shareXFiles(
-        [xFile],
-        text: '我的Ultimate Wheel评估结果\n评估时间：$assessmentDate\n总分：${totalScore.toStringAsFixed(1)}\n\n#极限飞盘 #UltimateWheel',
-      );
+      // Web环境处理
+      if (kIsWeb) {
+        // Web环境下直接分享图片数据，不保存到文件系统
+        final XFile xFile = XFile.fromData(
+          imageBytes,
+          name: 'ultimate_wheel_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.png',
+          mimeType: 'image/png',
+        );
+        
+        await Share.shareXFiles(
+          [xFile],
+          text: shareText,
+        );
+      } else {
+        // 移动端/桌面端：保存到临时目录
+        final Directory tempDir = await getTemporaryDirectory();
+        final String timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+        final String fileName = 'ultimate_wheel_$timestamp.png';
+        final File file = File('${tempDir.path}/$fileName');
+        await file.writeAsBytes(imageBytes);
 
-      // 分享完成后删除临时文件（延迟删除，确保分享完成）
-      Future.delayed(const Duration(seconds: 5), () {
-        if (file.existsSync()) {
-          file.delete();
-        }
-      });
+        // 分享文件
+        final XFile xFile = XFile(file.path);
+        await Share.shareXFiles(
+          [xFile],
+          text: shareText,
+        );
+
+        // 分享完成后删除临时文件（延迟删除，确保分享完成）
+        Future.delayed(const Duration(seconds: 5), () {
+          if (file.existsSync()) {
+            file.delete();
+          }
+        });
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -126,13 +144,6 @@ class ShareService {
         throw Exception('截图失败');
       }
 
-      // 保存到临时目录
-      final Directory tempDir = await getTemporaryDirectory();
-      final String timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final String fileName = 'ultimate_wheel_comparison_$timestamp.png';
-      final File file = File('${tempDir.path}/$fileName');
-      await file.writeAsBytes(imageBytes);
-
       // 生成分享文本
       final String changeText = scoreDifference > 0 
           ? '进步了${scoreDifference.toStringAsFixed(1)}分' 
@@ -140,19 +151,43 @@ class ShareService {
               ? '下降了${(-scoreDifference).toStringAsFixed(1)}分'
               : '保持稳定';
 
-      // 分享文件
-      final XFile xFile = XFile(file.path);
-      await Share.shareXFiles(
-        [xFile],
-        text: '我的Ultimate Wheel成长对比\n最新：$latestDate\n历史：$historicalDate\n总分变化：$changeText\n\n#极限飞盘 #UltimateWheel #成长记录',
-      );
+      final String shareText = '我的Ultimate Wheel成长对比\n最新：$latestDate\n历史：$historicalDate\n总分变化：$changeText\n\n#极限飞盘 #UltimateWheel #成长记录';
 
-      // 分享完成后删除临时文件
-      Future.delayed(const Duration(seconds: 5), () {
-        if (file.existsSync()) {
-          file.delete();
-        }
-      });
+      // Web环境处理
+      if (kIsWeb) {
+        // Web环境下直接分享图片数据，不保存到文件系统
+        final XFile xFile = XFile.fromData(
+          imageBytes,
+          name: 'ultimate_wheel_comparison_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.png',
+          mimeType: 'image/png',
+        );
+        
+        await Share.shareXFiles(
+          [xFile],
+          text: shareText,
+        );
+      } else {
+        // 移动端/桌面端：保存到临时目录
+        final Directory tempDir = await getTemporaryDirectory();
+        final String timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+        final String fileName = 'ultimate_wheel_comparison_$timestamp.png';
+        final File file = File('${tempDir.path}/$fileName');
+        await file.writeAsBytes(imageBytes);
+
+        // 分享文件
+        final XFile xFile = XFile(file.path);
+        await Share.shareXFiles(
+          [xFile],
+          text: shareText,
+        );
+
+        // 分享完成后删除临时文件
+        Future.delayed(const Duration(seconds: 5), () {
+          if (file.existsSync()) {
+            file.delete();
+          }
+        });
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

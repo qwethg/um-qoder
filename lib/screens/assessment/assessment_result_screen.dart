@@ -539,11 +539,42 @@ class _ShareThemeSelectorSheet extends StatefulWidget {
 
 class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
   late RadarTheme _selectedTheme;
+  late ScrollController _scrollController;
+  
+  // 每次滚动的距离（一个主题项的宽度 + 间距）
+  static const double _itemWidth = 112.0; // 100 + 12 padding
 
   @override
   void initState() {
     super.initState();
     _selectedTheme = widget.currentTheme;
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollLeft() {
+    final currentOffset = _scrollController.offset;
+    final newOffset = (currentOffset - _itemWidth).clamp(0.0, _scrollController.position.maxScrollExtent);
+    _scrollController.animateTo(
+      newOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _scrollRight() {
+    final currentOffset = _scrollController.offset;
+    final newOffset = (currentOffset + _itemWidth).clamp(0.0, _scrollController.position.maxScrollExtent);
+    _scrollController.animateTo(
+      newOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -582,30 +613,68 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
           ),
           const SizedBox(height: 16),
           
-          // 主题选择列表（横向滚动）
+          // 主题选择列表（横向滚动 + 翻页按钮）
           SizedBox(
             height: 140,
-            child: Scrollbar(
-              thumbVisibility: true,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: widget.allThemes.length,
-                itemBuilder: (context, index) {
-                  final theme = widget.allThemes[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: RadarThemePreview(
-                      theme: theme,
-                      size: 100,
-                      isSelected: theme.id == _selectedTheme.id,
-                      onTap: () {
-                        setState(() => _selectedTheme = theme);
-                        widget.onThemeChanged(theme);
-                      },
+            child: Row(
+              children: [
+                // 左翻页按钮
+                Container(
+                  width: 40,
+                  height: 140,
+                  alignment: Alignment.center,
+                  child: IconButton(
+                    onPressed: _scrollLeft,
+                    icon: const Icon(Icons.chevron_left),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                
+                // 主题列表
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: widget.allThemes.length,
+                    itemBuilder: (context, index) {
+                      final theme = widget.allThemes[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: RadarThemePreview(
+                          theme: theme,
+                          size: 100,
+                          isSelected: theme.id == _selectedTheme.id,
+                          onTap: () {
+                            setState(() => _selectedTheme = theme);
+                            widget.onThemeChanged(theme);
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                
+                const SizedBox(width: 8),
+                // 右翻页按钮
+                Container(
+                  width: 40,
+                  height: 140,
+                  alignment: Alignment.center,
+                  child: IconButton(
+                    onPressed: _scrollRight,
+                    icon: const Icon(Icons.chevron_right),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
