@@ -70,16 +70,16 @@ class RadarTheme {
       // 浅色：提高明度，降低饱和度，色相偏移
       hslColor
           .withLightness((hslColor.lightness * 1.2).clamp(0.0, 1.0))
-          .withSaturation((hslColor.saturation * 0.75).clamp(0.0, 1.0))
-          .withHue((hslColor.hue - 10) % 360)
+          .withSaturation((hslColor.saturation * 0.8).clamp(0.0, 1.0))
+          .withHue((hslColor.hue - 15) % 360)
           .toColor(),
       // 基础色
       baseColor,
       // 深色：降低明度，提高饱和度，色相偏移
       hslColor
-          .withLightness((hslColor.lightness * 0.75).clamp(0.0, 1.0))
+          .withLightness((hslColor.lightness * 0.8).clamp(0.0, 1.0))
           .withSaturation((hslColor.saturation * 1.2).clamp(0.0, 1.0))
-          .withHue((hslColor.hue + 10) % 360)
+          .withHue((hslColor.hue + 15) % 360)
           .toColor(),
     ];
   }
@@ -159,15 +159,6 @@ class PresetRadarThemes {
       techniqueColor: Color(0xFFE4B3C0),
       mindColor: Color(0xFFF3D4E3),
     ),
-    // 4. 青瓷雅韵
-    RadarTheme(
-      id: 'preset_4',
-      name: '青瓷雅韵',
-      athleticismColor: Color(0xFF86A393),
-      awarenessColor: Color(0xFFA0BBAD),
-      techniqueColor: Color(0xFFB8D4CA),
-      mindColor: Color(0xFFD9E9E1),
-    ),
     // 5. 暮夜星辰
     RadarTheme(
       id: 'preset_5',
@@ -185,15 +176,6 @@ class PresetRadarThemes {
       awarenessColor: Color(0xFF2F504C),
       techniqueColor: Color(0xFF563437),
       mindColor: Color(0xFFE7BEBE),
-    ),
-    // 7. 枫林晚霞
-    RadarTheme(
-      id: 'preset_7',
-      name: '枫林晚霞',
-      athleticismColor: Color(0xFFB02B26),
-      awarenessColor: Color(0xFFD1411C),
-      techniqueColor: Color(0xFFF3BF9A),
-      mindColor: Color(0xFFF9ECE4),
     ),
     // 8. 碧海青山
     RadarTheme(
@@ -221,15 +203,6 @@ class PresetRadarThemes {
       awarenessColor: Color(0xFF194790),
       techniqueColor: Color(0xFFFFDB00),
       mindColor: Color(0xFFFF5231),
-    ),
-    // 11. 春水煎茶
-    RadarTheme(
-      id: 'preset_11',
-      name: '春水煎茶',
-      athleticismColor: Color(0xFF82641E),
-      awarenessColor: Color(0xFFFFF9B3),
-      techniqueColor: Color(0xFFD4CCD5),
-      mindColor: Color(0xFF92AF71),
     ),
     // 12. 马蒂斯·紫韵
     RadarTheme(

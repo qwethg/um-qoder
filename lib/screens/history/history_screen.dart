@@ -14,45 +14,57 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AssessmentProvider>(
-      builder: (context, assessmentProvider, _) {
-        final assessments = assessmentProvider.assessments;
-
-        if (assessments.isEmpty) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('历史记录')),
-            body: _buildEmptyState(context),
-          );
-        }
+    // 性能优化: 改用 Selector，仅监听 assessmentProvider.assessments 列表，避免不必要的重建。
+    return Selector<AssessmentProvider, List<Assessment>>(
+      selector: (_, provider) => provider.assessments,
+      builder: (context, assessments, _) {
+        final isEmpty = assessments.isEmpty;
 
         return Scaffold(
           appBar: AppBar(
             title: const Text('历史记录'),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.show_chart),
-                tooltip: '趋势分析',
-                onPressed: () => context.push('/history/trend'),
-              ),
+              // 只有在有数据时才显示趋势分析按钮
+              if (!isEmpty)
+                IconButton(
+                  icon: const Icon(Icons.show_chart),
+                  tooltip: '趋势分析',
+                  onPressed: () => context.push('/history/trend'),
+                ),
             ],
           ),
-          body: ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: assessments.length,
-            itemBuilder: (context, index) {
-              final assessment = assessments[index];
-              return _buildAssessmentCard(context, assessment, assessments);
-            },
-          ),
+          body: isEmpty
+              // 性能优化: 拆分为独立的 StatelessWidget。
+              ? const _EmptyState()
+              : ListView.builder(
+                  // 性能优化: 添加 const 关键字。
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: assessments.length,
+                  itemBuilder: (context, index) {
+                    final assessment = assessments[index];
+                    // 性能优化: 拆分为独立的 StatelessWidget。
+                    return _AssessmentCard(
+                      assessment: assessment,
+                      isLatest: index == 0, // 列表已排序，第一个就是最新的
+                      showComparisonButton: assessments.length > 1 && index == 0,
+                    );
+                  },
+                ),
         );
       },
     );
   }
+}
 
-  /// 空状态
-  Widget _buildEmptyState(BuildContext context) {
+/// 空状态 Widget
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Padding(
+        // 性能优化: 添加 const 关键字。
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -62,22 +74,26 @@ class HistoryScreen extends StatelessWidget {
               size: 64,
               color: Theme.of(context).colorScheme.primary,
             ),
+            // 性能优化: 添加 const 关键字。
             const SizedBox(height: 24),
             Text(
               '还没有评估记录',
               style: Theme.of(context).textTheme.titleLarge,
             ),
+            // 性能优化: 添加 const 关键字。
             const SizedBox(height: 8),
             Text(
               '完成第一次评估后，这里会显示你的成长轨迹',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
               textAlign: TextAlign.center,
             ),
+            // 性能优化: 添加 const 关键字。
             const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: () => context.go('/assessment'),
+              // 性能优化: 添加 const 关键字。
               icon: const Icon(Icons.add),
               label: const Text('开始评估'),
             ),
@@ -86,31 +102,33 @@ class HistoryScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  /// 评估卡片
-  Widget _buildAssessmentCard(BuildContext context, Assessment assessment, List<Assessment> allAssessments) {
+/// 评估卡片 Widget
+class _AssessmentCard extends StatelessWidget {
+  final Assessment assessment;
+  final bool isLatest;
+  final bool showComparisonButton;
+
+  const _AssessmentCard({
+    required this.assessment,
+    required this.isLatest,
+    required this.showComparisonButton,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
     final typeText = assessment.type == AssessmentType.deep ? '深度评估' : '快速评估';
-    
-    // 判断是否是最新记录
-    final isLatest = allAssessments.first.id == assessment.id;
-    
-    // 计算各类别得分
-    final athleticismIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.athleticism)
-        .map((a) => a.id).toList();
-    final awarenessIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.awareness)
-        .map((a) => a.id).toList();
-    final techniqueIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.technique)
-        .map((a) => a.id).toList();
-    final mindIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.mind)
-        .map((a) => a.id).toList();
 
     return Card(
+      // 性能优化: 添加 const 关键字。
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () => context.push('/assessment/result/${assessment.id}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
+          // 性能优化: 添加 const 关键字。
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,12 +145,14 @@ class HistoryScreen extends StatelessWidget {
                             Text(
                               dateFormat.format(assessment.createdAt),
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                             if (isLatest) ...[
+                              // 性能优化: 添加 const 关键字。
                               const SizedBox(width: 8),
                               Container(
+                                // 性能优化: 添加 const 关键字。
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: AppTheme.lightSecondary,
@@ -141,37 +161,40 @@ class HistoryScreen extends StatelessWidget {
                                 child: Text(
                                   '最新',
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                               ),
                             ],
                           ],
                         ),
+                        // 性能优化: 添加 const 关键字。
                         const SizedBox(height: 4),
                         Container(
+                          // 性能优化: 添加 const 关键字。
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: assessment.type == AssessmentType.deep
-                                ? AppTheme.lightSecondary.withOpacity(0.2)  // 珊瑚粉
-                                : AppTheme.lightPrimary.withOpacity(0.2),   // 雾霾蓝
+                                ? AppTheme.lightSecondary.withOpacity(0.2)
+                                : AppTheme.lightPrimary.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             typeText,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: assessment.type == AssessmentType.deep
-                                  ? AppTheme.lightSecondary               // 珊瑚粉
-                                  : AppTheme.lightPrimary,                // 雾霾蓝
-                              fontWeight: FontWeight.w500,
-                            ),
+                                  color: assessment.type == AssessmentType.deep
+                                      ? AppTheme.lightSecondary
+                                      : AppTheme.lightPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                         ),
                       ],
                     ),
                   ),
                   Container(
+                    // 性能优化: 添加 const 关键字。
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
@@ -180,35 +203,58 @@ class HistoryScreen extends StatelessWidget {
                     child: Text(
                       assessment.totalScore.toStringAsFixed(0),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
                     ),
                   ),
                 ],
               ),
+              // 性能优化: 添加 const 关键字。
               const SizedBox(height: 16),
               
               // 分类得分
               Row(
                 children: [
-                  _buildMiniScoreChip(context, Icons.directions_run, assessment.getCategoryScore(athleticismIds), 0),
+                  // 性能优化: 拆分为独立的 StatelessWidget。
+                  _MiniScoreChip(
+                    icon: Icons.directions_run,
+                    score: assessment.getCategoryScore(AbilityConstants.getAbilitiesByCategory(AbilityCategory.athleticism).map((e) => e.id).toList()),
+                    colorIndex: 0,
+                  ),
+                  // 性能优化: 添加 const 关键字。
                   const SizedBox(width: 8),
-                  _buildMiniScoreChip(context, Icons.visibility, assessment.getCategoryScore(awarenessIds), 1),
+                  _MiniScoreChip(
+                    icon: Icons.visibility,
+                    score: assessment.getCategoryScore(AbilityConstants.getAbilitiesByCategory(AbilityCategory.awareness).map((e) => e.id).toList()),
+                    colorIndex: 1,
+                  ),
+                  // 性能优化: 添加 const 关键字。
                   const SizedBox(width: 8),
-                  _buildMiniScoreChip(context, Icons.build, assessment.getCategoryScore(techniqueIds), 2),
+                  _MiniScoreChip(
+                    icon: Icons.build,
+                    score: assessment.getCategoryScore(AbilityConstants.getAbilitiesByCategory(AbilityCategory.technique).map((e) => e.id).toList()),
+                    colorIndex: 2,
+                  ),
+                  // 性能优化: 添加 const 关键字。
                   const SizedBox(width: 8),
-                  _buildMiniScoreChip(context, Icons.favorite, assessment.getCategoryScore(mindIds), 3),
+                  _MiniScoreChip(
+                    icon: Icons.favorite,
+                    score: assessment.getCategoryScore(AbilityConstants.getAbilitiesByCategory(AbilityCategory.mind).map((e) => e.id).toList()),
+                    colorIndex: 3,
+                  ),
                 ],
               ),
               
-              // 对比按钮（仅最新记录显示）
-              if (isLatest && allAssessments.length > 1) ...[
+              // 对比按钮
+              if (showComparisonButton) ...[
+                // 性能优化: 添加 const 关键字。
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () => context.push('/history/comparison/${assessment.id}'),
+                    // 性能优化: 添加 const 关键字。
                     icon: const Icon(Icons.compare_arrows, size: 18),
                     label: const Text('与历史对比'),
                     style: OutlinedButton.styleFrom(
@@ -223,11 +269,26 @@ class HistoryScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildMiniScoreChip(BuildContext context, IconData icon, double score, int colorIndex) {
+/// 迷你得分标签 Widget
+class _MiniScoreChip extends StatelessWidget {
+  final IconData icon;
+  final double score;
+  final int colorIndex;
+
+  const _MiniScoreChip({
+    required this.icon,
+    required this.score,
+    required this.colorIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final color = AppTheme.getCategoryColor(colorIndex);
     return Expanded(
       child: Container(
+        // 性能优化: 添加 const 关键字。
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
@@ -236,13 +297,14 @@ class HistoryScreen extends StatelessWidget {
         child: Column(
           children: [
             Icon(icon, size: 16, color: color),
+            // 性能优化: 添加 const 关键字。
             const SizedBox(height: 4),
             Text(
               score.toStringAsFixed(1),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
             ),
           ],
         ),

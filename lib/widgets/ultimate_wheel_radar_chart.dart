@@ -99,9 +99,14 @@ class _RadarChartPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 * 0.8;
 
+    final gridPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
     // 1. 绘制网格背景
     if (showGrid) {
-      _drawGrid(canvas, center, radius);
+      _drawGrid(canvas, center, radius, gridPaint);
     }
 
     // 2. 绘制数据花瓣
@@ -114,12 +119,7 @@ class _RadarChartPainter extends CustomPainter {
   }
 
   /// 绘制12边形网格
-  void _drawGrid(Canvas canvas, Offset center, double radius) {
-    final paint = Paint()
-      ..color = Colors.grey.withValues(alpha: 0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
+  void _drawGrid(Canvas canvas, Offset center, double radius, Paint paint) {
     // 绘制同心12边形，与花瓣边缘对齐
     for (int level = 1; level <= gridLevels; level++) {
       final levelRadius = radius * (level / gridLevels);
@@ -221,8 +221,8 @@ class _RadarChartPainter extends CustomPainter {
       center: Alignment.center,
       radius: 1.0,
       colors: [
-        adjustedColors.first.withValues(alpha: 0.4),  // 中心透明
-        adjustedColors.last.withValues(alpha: 0.8),    // 边缘浓郁
+        adjustedColors.first.withOpacity(0.4), // 中心透明
+        adjustedColors.last.withOpacity(0.8), // 边缘浓郁
       ],
       stops: const [0.0, 1.0],
     );

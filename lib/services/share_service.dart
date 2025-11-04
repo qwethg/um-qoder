@@ -9,6 +9,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 
+import 'logger_service.dart';
+
 /// 分享服务 - 处理截图和分享逻辑
 class ShareService {
   static final ShareService _instance = ShareService._internal();
@@ -28,6 +30,7 @@ class ShareService {
     required double totalScore,
   }) async {
     try {
+      logger.info('开始分享评估结果...');
       // 显示加载提示
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,14 +57,15 @@ class ShareService {
       );
 
       if (imageBytes == null) {
-        throw Exception('截图失败');
+        throw Exception('截图失败，捕获的图片数据为空');
       }
+      logger.debug('截图成功，图片大小: ${imageBytes.lengthInBytes} bytes');
 
       final String shareText = '我的Ultimate Wheel评估结果\n评估时间：$assessmentDate\n总分：${totalScore.toStringAsFixed(1)}\n\n#极限飞盘 #UltimateWheel';
 
       // Web环境处理
       if (kIsWeb) {
-        // Web环境下直接分享图片数据，不保存到文件系统
+        logger.info('Web环境，直接分享图片数据');
         final XFile xFile = XFile.fromData(
           imageBytes,
           name: 'ultimate_wheel_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.png',
@@ -72,6 +76,7 @@ class ShareService {
           [xFile],
           text: shareText,
         );
+        logger.info('Web分享调用完成');
       } else {
         // 移动端/桌面端：保存到临时目录
         final Directory tempDir = await getTemporaryDirectory();
@@ -79,6 +84,7 @@ class ShareService {
         final String fileName = 'ultimate_wheel_$timestamp.png';
         final File file = File('${tempDir.path}/$fileName');
         await file.writeAsBytes(imageBytes);
+        logger.info('图片已保存到临时文件: ${file.path}');
 
         // 分享文件
         final XFile xFile = XFile(file.path);
@@ -86,15 +92,24 @@ class ShareService {
           [xFile],
           text: shareText,
         );
+        logger.info('移动端分享调用完成');
 
         // 分享完成后删除临时文件（延迟删除，确保分享完成）
-        Future.delayed(const Duration(seconds: 5), () {
-          if (file.existsSync()) {
-            file.delete();
+        Future.delayed(const Duration(seconds: 10), () {
+          try {
+            if (file.existsSync()) {
+              file.deleteSync();
+              logger.info('临时文件已删除: ${file.path}');
+            } else {
+              logger.warning('尝试删除临时文件但文件不存在: ${file.path}');
+            }
+          } catch (e, s) {
+            logger.error('删除临时文件失败: ${file.path}', e, s);
           }
         });
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.error('分享评估结果失败', e, s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -115,6 +130,7 @@ class ShareService {
     required double scoreDifference,
   }) async {
     try {
+      logger.info('开始分享对比图...');
       // 显示加载提示
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -141,8 +157,9 @@ class ShareService {
       );
 
       if (imageBytes == null) {
-        throw Exception('截图失败');
+        throw Exception('截图失败，捕获的图片数据为空');
       }
+      logger.debug('对比图截图成功，图片大小: ${imageBytes.lengthInBytes} bytes');
 
       // 生成分享文本
       final String changeText = scoreDifference > 0 
@@ -155,7 +172,7 @@ class ShareService {
 
       // Web环境处理
       if (kIsWeb) {
-        // Web环境下直接分享图片数据，不保存到文件系统
+        logger.info('Web环境，直接分享对比图数据');
         final XFile xFile = XFile.fromData(
           imageBytes,
           name: 'ultimate_wheel_comparison_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.png',
@@ -166,6 +183,7 @@ class ShareService {
           [xFile],
           text: shareText,
         );
+        logger.info('Web对比图分享调用完成');
       } else {
         // 移动端/桌面端：保存到临时目录
         final Directory tempDir = await getTemporaryDirectory();
@@ -173,6 +191,7 @@ class ShareService {
         final String fileName = 'ultimate_wheel_comparison_$timestamp.png';
         final File file = File('${tempDir.path}/$fileName');
         await file.writeAsBytes(imageBytes);
+        logger.info('对比图已保存到临时文件: ${file.path}');
 
         // 分享文件
         final XFile xFile = XFile(file.path);
@@ -180,15 +199,24 @@ class ShareService {
           [xFile],
           text: shareText,
         );
+        logger.info('移动端对比图分享调用完成');
 
         // 分享完成后删除临时文件
-        Future.delayed(const Duration(seconds: 5), () {
-          if (file.existsSync()) {
-            file.delete();
+        Future.delayed(const Duration(seconds: 10), () {
+          try {
+            if (file.existsSync()) {
+              file.deleteSync();
+              logger.info('临时文件已删除: ${file.path}');
+            } else {
+              logger.warning('尝试删除临时文件但文件不存在: ${file.path}');
+            }
+          } catch (e, s) {
+            logger.error('删除临时文件失败: ${file.path}', e, s);
           }
         });
       }
-    } catch (e) {
+    } catch (e, s) {
+      logger.error('分享对比图失败', e, s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -206,8 +234,11 @@ class ShareService {
     required String text,
   }) async {
     try {
+      logger.info('开始分享纯文本: "$text"');
       await Share.share(text);
-    } catch (e) {
+      logger.info('纯文本分享调用完成');
+    } catch (e, s) {
+      logger.error('分享纯文本失败', e, s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -222,16 +253,22 @@ class ShareService {
   /// 从GlobalKey捕获截图（备用方案）
   Future<Uint8List?> captureFromKey(GlobalKey key) async {
     try {
+      logger.info('开始从 GlobalKey 捕获截图');
       RenderRepaintBoundary? boundary = 
           key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       
-      if (boundary == null) return null;
+      if (boundary == null) {
+        logger.warning('无法找到 RenderRepaintBoundary');
+        return null;
+      }
 
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      return byteData?.buffer.asUint8List();
-    } catch (e) {
-      debugPrint('截图失败: $e');
+      final bytes = byteData?.buffer.asUint8List();
+      logger.info('从 GlobalKey 捕获截图成功, 大小: ${bytes?.lengthInBytes ?? 0} bytes');
+      return bytes;
+    } catch (e, s) {
+      logger.error('从 GlobalKey 捕获截图失败', e, s);
       return null;
     }
   }

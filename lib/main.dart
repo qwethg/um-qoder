@@ -1,32 +1,43 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/router.dart';
 import 'package:ultimate_wheel/config/theme.dart';
+import 'package:ultimate_wheel/services/logger_service.dart';
 import 'package:ultimate_wheel/services/storage_service.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
 import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
 import 'package:ultimate_wheel/providers/preferences_provider.dart';
 import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // 初始化 Hive
-  await Hive.initFlutter();
-  
-  // 初始化存储服务
-  final storageService = StorageService();
-  await storageService.initialize();
-  
-  // 初始化雷达图主题Provider
-  final radarThemeProvider = RadarThemeProvider();
-  await radarThemeProvider.init();
-  
-  runApp(UltimateWheelApp(
-    storageService: storageService,
-    radarThemeProvider: radarThemeProvider,
-  ));
+void main() {
+  runZonedGuarded<Future<void>>(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    FlutterError.onError = (FlutterErrorDetails details) {
+      logger.error('Flutter 框架捕获到错误', details.exception, details.stack);
+    };
+
+    // 初始化 Hive
+    await Hive.initFlutter();
+
+    // 初始化存储服务
+    final storageService = StorageService();
+    await storageService.initialize();
+
+    // 初始化雷达图主题Provider
+    final radarThemeProvider = RadarThemeProvider();
+    await radarThemeProvider.init();
+
+    runApp(UltimateWheelApp(
+      storageService: storageService,
+      radarThemeProvider: radarThemeProvider,
+    ));
+  }, (error, stack) {
+    logger.fatal('未捕获的 Dart 错误', error, stack);
+  });
 }
 
 class UltimateWheelApp extends StatelessWidget {

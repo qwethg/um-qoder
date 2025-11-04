@@ -42,62 +42,196 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
       appBar: AppBar(
         title: const Text('快速评估'),
       ),
-      body: Consumer<GoalSettingProvider>(
-        builder: (context, goalProvider, _) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 提示文字
-                Text(
-                  '快速评估',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '用 5 分钟快速更新你的能力状态。根据你对当前状态的满意度进行评分。',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                
-                // 按类别分组显示
-                ...AbilityCategory.values.map((category) {
-                  final abilities = AbilityConstants.getAbilitiesByCategory(category);
-                  return _buildCategorySection(
-                    context,
-                    category,
-                    abilities,
-                    goalProvider,
-                  );
-                }),
-                
-                const SizedBox(height: 80), // 留出底部按钮空间
-              ],
-            ),
-          );
-        },
+      // 性能优化: 移除了包裹整体的 Consumer，因为 GoalSettingProvider 的数据是静态的，不需要监听。
+      body: SingleChildScrollView(
+        // 性能优化: 添加 const 关键字。
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 性能优化: 拆分为独立的 StatelessWidget。
+            const _AssessmentHeader(),
+            // 性能优化: 添加 const 关键字。
+            const SizedBox(height: 32),
+            
+            // 按类别分组显示
+            // 性能优化: 将类别区域拆分为独立的 StatelessWidget。
+            ...AbilityCategory.values.map((category) {
+              final abilities = AbilityConstants.getAbilitiesByCategory(category);
+              final color = AppTheme.getCategoryColor(category.colorIndex);
+              return _AbilityCategorySection(
+                key: ValueKey(category),
+                category: category,
+                abilities: abilities,
+                scores: _scores,
+                color: color,
+                onScoreChanged: (abilityId, score) {
+                  setState(() {
+                    _scores[abilityId] = score;
+                  });
+                },
+              );
+            }),
+            
+            // 性能优化: 添加 const 关键字。
+            const SizedBox(height: 80), // 留出底部按钮空间
+          ],
+        ),
       ),
+      // BUG修复: 修正了 Scaffold 结构，将底部栏正确放置在 bottomNavigationBar。
       bottomNavigationBar: _buildBottomBar(context),
     );
   }
 
-  /// 构建类别区域
-  Widget _buildCategorySection(
-    BuildContext context,
-    AbilityCategory category,
-    List<Ability> abilities,
-    GoalSettingProvider goalProvider,
-  ) {
-    final color = AppTheme.getCategoryColor(category.colorIndex);
+  /// 构建底部按钮栏
+  Widget _buildBottomBar(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        // 性能优化: 添加 const 关键字。
+        padding: const EdgeInsets.all(24.0),
+        child: FilledButton(
+          onPressed: _isSaving ? null : _handleComplete,
+          // 性能优化: 添加 const 关键字。
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+          child: _isSaving
+              // 性能优化: 添加 const 关键字。
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              // 性能优化: 添加 const 关键字。
+              : const Text('完成评估'),
+        ),
+      ),
+    );
+  }
 
+  /// 处理完成评估
+  Future<void> _handleComplete() async {
+    // 检查是否有未评分的项目
+    final hasUnscored = _scores.values.any((score) => score == 0.0);
+    if (hasUnscored) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          // 性能优化: 添加 const 关键字。
+          title: const Text('提示'),
+          content: const Text('还有未评分的项目，确定要继续吗？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              // 性能优化: 添加 const 关键字。
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              // 性能优化: 添加 const 关键字。
+              child: const Text('继续'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // 创建评估记录
+      final assessment = Assessment(
+        id: const Uuid().v4(),
+        createdAt: DateTime.now(),
+        type: AssessmentType.quick,
+        scores: Map.from(_scores),
+        notes: const {},
+      );
+
+      // 保存评估
+      if (mounted) {
+        // 性能优化: 在事件处理器中使用 context.read()，避免 Widget 重建。
+        await context.read<AssessmentProvider>().saveAssessment(assessment);
+
+        // 跳转到结果页
+        if (mounted) {
+          context.go('/assessment/result/${assessment.id}');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失败：$e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+}
+
+/// 评估页面的静态标题和描述
+class _AssessmentHeader extends StatelessWidget {
+  const _AssessmentHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '快速评估',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        // 性能优化: 添加 const 关键字。
+        const SizedBox(height: 8),
+        Text(
+          '用 5 分钟快速更新你的能力状态。根据你对当前状态的满意度进行评分。',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 单个能力类别的 UI 区域
+class _AbilityCategorySection extends StatelessWidget {
+  final AbilityCategory category;
+  final List<Ability> abilities;
+  final Map<String, double> scores;
+  final Color color;
+  final Function(String, double) onScoreChanged;
+
+  const _AbilityCategorySection({
+    super.key,
+    required this.category,
+    required this.abilities,
+    required this.scores,
+    required this.color,
+    required this.onScoreChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 类别标题
         Padding(
+          // 性能优化: 添加 const 关键字。
           padding: const EdgeInsets.only(bottom: 16.0),
           child: Row(
             children: [
@@ -106,13 +240,14 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                 size: 20,
                 color: color,
               ),
+              // 性能优化: 添加 const 关键字。
               const SizedBox(width: 12),
               Text(
                 category.name,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ],
           ),
@@ -120,35 +255,46 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
 
         // 能力项列表
         ...abilities.map((ability) {
-          return _buildAbilityItem(
-            context,
-            ability,
-            color,
-            goalProvider,
+          return _AbilityItem(
+            key: ValueKey(ability.id),
+            ability: ability,
+            color: color,
+            score: scores[ability.id] ?? 0.0,
+            onChanged: (score) => onScoreChanged(ability.id, score),
           );
         }),
 
+        // 性能优化: 添加 const 关键字。
         const SizedBox(height: 32),
       ],
     );
   }
+}
 
-  /// 构建单个能力项
-  Widget _buildAbilityItem(
-    BuildContext context,
-    Ability ability,
-    Color color,
-    GoalSettingProvider goalProvider,
-  ) {
-    final currentScore = _scores[ability.id] ?? 0.0;
-    final showDescription = currentScore == 3.0 || 
-                           currentScore == 5.0 || 
-                           currentScore == 7.0 ||
-                           currentScore == 10.0;
+/// 单个能力项的 UI，包含滑块和描述
+class _AbilityItem extends StatelessWidget {
+  final Ability ability;
+  final Color color;
+  final double score;
+  final ValueChanged<double> onChanged;
+
+  const _AbilityItem({
+    super.key,
+    required this.ability,
+    required this.color,
+    required this.score,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final showDescription = score == 3.0 || score == 5.0 || score == 7.0 || score == 10.0;
 
     return Card(
+      // 性能优化: 添加 const 关键字。
       margin: const EdgeInsets.only(bottom: 16.0),
       child: Padding(
+        // 性能优化: 添加 const 关键字。
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,6 +307,7 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                   size: 22,
                   color: color,
                 ),
+                // 性能优化: 添加 const 关键字。
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -169,14 +316,14 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                       Text(
                         ability.name,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       Text(
                         ability.description,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                       ),
                     ],
                   ),
@@ -188,15 +335,16 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    currentScore.toStringAsFixed(1),
+                    score.toStringAsFixed(1),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
               ],
             ),
+            // 性能优化: 添加 const 关键字。
             const SizedBox(height: 16),
 
             // 滑块
@@ -209,16 +357,13 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                 trackHeight: 4.0,
               ),
               child: Slider(
-                value: currentScore,
+                value: score,
                 min: 0,
                 max: 10,
                 divisions: 20, // 0.5 为一个刻度
-                label: currentScore.toStringAsFixed(1),
+                label: score.toStringAsFixed(1),
                 onChanged: (value) {
-                  setState(() {
-                    _scores[ability.id] = value;
-                  });
-                  
+                  onChanged(value);
                   // 移动端震动反馈
                   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
                     if (value == 3.0 || value == 5.0 || value == 7.0 || value == 10.0) {
@@ -245,16 +390,18 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                       size: 16,
                       color: color,
                     ),
+                    // 性能优化: 添加 const 关键字。
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        goalProvider.getDescription(
+                        // 性能优化: 改用 context.read()，仅在需要时读取数据，不产生监听。
+                        context.read<GoalSettingProvider>().getDescription(
                           ability.id,
-                          currentScore.toInt(),
+                          score.toInt(),
                         ),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                       ),
                     ),
                   ],
@@ -264,95 +411,5 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
         ),
       ),
     );
-  }
-
-  /// 构建底部按钮栏
-  Widget _buildBottomBar(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: FilledButton(
-          onPressed: _isSaving ? null : _handleComplete,
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          child: _isSaving
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : const Text('完成评估'),
-        ),
-      ),
-    );
-  }
-
-  /// 处理完成评估
-  Future<void> _handleComplete() async {
-    // 检查是否有未评分的项目
-    final hasUnscored = _scores.values.any((score) => score == 0.0);
-    if (hasUnscored) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('提示'),
-          content: const Text('还有未评分的项目，确定要继续吗？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('继续'),
-            ),
-          ],
-        ),
-      );
-
-      if (confirm != true) return;
-    }
-
-    setState(() {
-      _isSaving = true;
-    });
-
-    try {
-      // 创建评估记录
-      final assessment = Assessment(
-        id: const Uuid().v4(),
-        createdAt: DateTime.now(),
-        type: AssessmentType.quick,
-        scores: Map.from(_scores),
-        notes: const {},
-      );
-
-      // 保存评估
-      if (mounted) {
-        await Provider.of<AssessmentProvider>(context, listen: false)
-            .saveAssessment(assessment);
-
-        // 跳转到结果页
-        if (mounted) {
-          context.go('/assessment/result/${assessment.id}');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败：$e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
-    }
   }
 }

@@ -390,28 +390,6 @@ class AiIntegrationTest {
     return results;
   }
 
-  /// 创建测试用的评估数据
-  Assessment _createTestAssessment() {
-    return Assessment(
-      id: 'test_assessment_${DateTime.now().millisecondsSinceEpoch}',
-      title: '测试评估',
-      questions: [
-        Question(
-          id: 'q1',
-          text: '你的学习目标是什么？',
-          type: QuestionType.text,
-          options: [],
-        ),
-        Question(
-          id: 'q2',
-          text: '你每天学习多长时间？',
-          type: QuestionType.singleChoice,
-          options: ['1-2小时', '2-4小时', '4小时以上'],
-        ),
-      ],
-      createdAt: DateTime.now(),
-    );
-  }
 
   /// 验证报告质量
   bool _validateReportQuality(AiReport report) {

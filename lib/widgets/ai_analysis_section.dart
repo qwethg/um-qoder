@@ -186,158 +186,208 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
       ),
       child: Column(
         children: [
-          // 头部区域
-          InkWell(
-            onTap: hasAnalysis && !_isGenerating ? _toggleExpanded : null,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
+          _HeaderSection(
+            isGenerating: _isGenerating,
+            hasAnalysis: hasAnalysis,
+            isExpanded: _isExpanded,
+            assessment: widget.assessment,
+            onToggleExpanded: _toggleExpanded,
+          ),
+          
+          // 展开的内容区域
+          if (hasAnalysis)
+            _ExpandedContentSection(
+              expandAnimation: _expandAnimation,
+              analysisContent: widget.assessment.aiAnalysisContent!,
+            ),
+          
+          // 生成按钮（仅在未生成时显示）
+          if (!hasAnalysis && !_isGenerating)
+            _GenerateButton(onPressed: _generateAiAnalysis),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderSection extends StatelessWidget {
+  final bool isGenerating;
+  final bool hasAnalysis;
+  final bool isExpanded;
+  final Assessment assessment;
+  final VoidCallback onToggleExpanded;
+
+  const _HeaderSection({
+    required this.isGenerating,
+    required this.hasAnalysis,
+    required this.isExpanded,
+    required this.assessment,
+    required this.onToggleExpanded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: hasAnalysis && !isGenerating ? onToggleExpanded : null,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.psychology,
+                color: Colors.blue,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // AI 图标
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.psychology,
-                      color: Colors.blue,
-                      size: 20,
+                  const Text(
+                    'AI 智能分析',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  
-                  // 标题和状态
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'AI 智能分析',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        if (_isGenerating)
-                          const Text(
-                            'AI 教练分析中...',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue,
-                            ),
-                          )
-                        else if (hasAnalysis)
-                          Text(
-                            widget.assessment.aiAnalysisSummary ?? '点击展开查看详细分析',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          )
-                        else
-                          const Text(
-                            '点击下方按钮，获取 AI 教练为您生成的专业分析报告',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  
-                  // 右侧图标
-                  if (_isGenerating)
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                  const SizedBox(height: 4),
+                  if (isGenerating)
+                    const Text(
+                      'AI 教练分析中...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue,
                       ),
                     )
                   else if (hasAnalysis)
-                    AnimatedRotation(
-                      turns: _isExpanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 300),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down,
+                    Text(
+                      assessment.aiAnalysisSummary ?? '点击展开查看详细分析',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  else
+                    const Text(
+                      '点击下方按钮，获取 AI 教练为您生成的专业分析报告',
+                      style: TextStyle(
+                        fontSize: 12,
                         color: Colors.grey,
                       ),
                     ),
                 ],
               ),
             ),
+            if (isGenerating)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+              )
+            else if (hasAnalysis)
+              AnimatedRotation(
+                turns: isExpanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 300),
+                child: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.grey,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExpandedContentSection extends StatelessWidget {
+  final Animation<double> expandAnimation;
+  final String analysisContent;
+
+  const _ExpandedContentSection({
+    required this.expandAnimation,
+    required this.analysisContent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizeTransition(
+      sizeFactor: expandAnimation,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 300),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(8),
           ),
-          
-          // 展开的内容区域
-          if (hasAnalysis)
-            SizeTransition(
-              sizeFactor: _expandAnimation,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Container(
-                  constraints: const BoxConstraints(maxHeight: 300),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
+          child: Scrollbar(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(12),
+              child: MarkdownBody(
+                data: analysisContent,
+                styleSheet: MarkdownStyleSheet(
+                  p: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: Colors.black87,
                   ),
-                  child: Scrollbar(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(12),
-                      child: MarkdownBody(
-                        data: widget.assessment.aiAnalysisContent!,
-                        styleSheet: MarkdownStyleSheet(
-                          p: const TextStyle(
-                            fontSize: 14,
-                            height: 1.5,
-                            color: Colors.black87,
-                          ),
-                          h2: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                          h3: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),
+                  h2: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  h3: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
                 ),
               ),
             ),
-          
-          // 生成按钮（仅在未生成时显示）
-          if (!hasAnalysis && !_isGenerating)
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _generateAiAnalysis,
-                icon: const Icon(Icons.psychology, size: 18),
-                label: const Text('获取 AI 智能分析'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-        ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GenerateButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _GenerateButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.psychology, size: 18),
+        label: const Text('获取 AI 智能分析'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
     );
   }
