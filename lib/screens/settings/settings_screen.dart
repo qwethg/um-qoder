@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
 import 'package:ultimate_wheel/providers/preferences_provider.dart';
 import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
+import 'package:ultimate_wheel/widgets/api_key_tutorial_dialog.dart';
 import 'package:ultimate_wheel/widgets/radar_theme_preview.dart';
 
 /// 设置页 (06)
@@ -30,6 +31,8 @@ class SettingsScreen extends StatelessWidget {
           // AI 设置
           _SectionHeader('AI 设置'),
           _ApiKeyCard(),
+          _AiModelCard(),
+          _AiPromptTile(),
           Divider(),
 
           // 评估设置
@@ -297,9 +300,24 @@ class _ApiKeyCardState extends State<_ApiKeyCard> {
                 label: const Text('保存 API Key'),
               ),
             ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => _showTutorialDialog(context),
+                child: const Text('如何获取免费 API Key？'),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showTutorialDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const ApiKeyTutorialDialog(),
     );
   }
 
@@ -326,6 +344,195 @@ class _ApiKeyCardState extends State<_ApiKeyCard> {
         ),
       );
     }
+  }
+}
+
+/// AI 提示词设置项
+class _AiPromptTile extends StatelessWidget {
+  const _AiPromptTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.edit_note_outlined),
+      title: const Text('AI 教练提示词'),
+      subtitle: const Text('自定义 AI 教练的系统指令'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _showAiPromptDialog(context),
+    );
+  }
+
+  void _showAiPromptDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => const _AiPromptDialog(),
+    );
+  }
+}
+
+/// AI 提示词编辑对话框
+class _AiPromptDialog extends StatefulWidget {
+  const _AiPromptDialog();
+
+  @override
+  State<_AiPromptDialog> createState() => _AiPromptDialogState();
+}
+
+class _AiPromptDialogState extends State<_AiPromptDialog> {
+  late final TextEditingController _promptController;
+
+  @override
+  void initState() {
+    super.initState();
+    final aiPrompt = context.read<PreferencesProvider>().aiPrompt;
+    _promptController = TextEditingController(text: aiPrompt);
+  }
+
+  @override
+  void dispose() {
+    _promptController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.read<PreferencesProvider>();
+
+    return AlertDialog(
+      title: const Text('编辑 AI 教练提示词'),
+      content: TextField(
+        controller: _promptController,
+        maxLines: 15,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          hintText: '请输入 AI 教练的系统提示词...',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            provider.restoreDefaultAiSettings();
+            _promptController.text = provider.aiPrompt;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('提示词已恢复为默认设置'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+          child: const Text('恢复默认'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () {
+            provider.updateAiPrompt(_promptController.text);
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('提示词已保存'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+          child: const Text('保存'),
+        ),
+      ],
+    );
+  }
+}
+
+/// AI 模型设置卡片
+class _AiModelCard extends StatefulWidget {
+  const _AiModelCard();
+
+  @override
+  State<_AiModelCard> createState() => _AiModelCardState();
+}
+
+class _AiModelCardState extends State<_AiModelCard> {
+  late final TextEditingController _modelController;
+
+  @override
+  void initState() {
+    super.initState();
+    final aiModel = context.read<PreferencesProvider>().aiModel;
+    _modelController = TextEditingController(text: aiModel);
+  }
+
+  @override
+  void dispose() {
+    _modelController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<PreferencesProvider>();
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.memory_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'AI 模型设置',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '当前模型为 SiliconFlow 提供的免费模型。目前仅支持 SiliconFlow 兼容接口。',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _modelController,
+              decoration: const InputDecoration(
+                labelText: 'AI 模型名称',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.hub_outlined),
+              ),
+              onChanged: (value) => provider.updateAiModel(value),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  provider.restoreDefaultAiSettings();
+                  _modelController.text = provider.aiModel;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('AI 模型已恢复为默认设置'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.refresh_outlined),
+                label: const Text('恢复默认模型'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

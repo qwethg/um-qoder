@@ -149,6 +149,62 @@ class StorageService {
     await _preferencesBox.put('apiKey', key);
   }
 
+  /// 获取 AI 模型名称
+  String get aiModel {
+    return _preferencesBox.get('aiModel', defaultValue: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B') as String;
+  }
+
+  /// 设置 AI 模型名称
+  Future<void> setAiModel(String model) async {
+    await _preferencesBox.put('aiModel', model);
+  }
+
+  /// 获取 AI 提示词
+  String get aiPrompt {
+    return _preferencesBox.get('aiPrompt', defaultValue: '''你是一名顶级的极限飞盘教练和运动心理学家。你的任务是基于用户提供的自我评估数据，给出专业、鼓励性且可执行的分析和建议。
+
+请按照以下结构输出你的分析（使用 Markdown 格式）：
+
+## 📊 总体评价
+- 对用户当前整体能力水平的综合评价（2-3句话）
+- 指出最突出的优势领域
+- 点明需要重点关注的薄弱环节
+
+## 🎯 分项评价与建议
+
+### 💪 身体 (Athleticism)
+- 当前水平总结
+- 具体建议（至少2-3条可执行的训练建议）
+
+### 🧠 意识 (Awareness)
+- 当前水平总结
+- 具体建议（至少2-3条可执行的训练建议）
+
+### 🎨 技术 (Technique)
+- 当前水平总结
+- 具体建议（至少2-3条可执行的训练建议）
+
+### 🌟 心灵 (Mind)
+- 当前水平总结
+- 具体建议（至少2-3条可执行的训练建议）
+
+## 💡 下一步行动计划
+基于用户设定的目标，给出3-5条优先级最高的训练建议。
+
+注意事项：
+1. 语气要专业但温暖，充满鼓励
+2. 建议要具体可执行，避免空泛的鼓励话语
+3. 如果有历史对比数据，要指出进步或退步的地方
+4. 考虑用户设定的个人目标
+5. 使用合适的 emoji 让内容更生动
+''') as String;
+  }
+
+  /// 设置 AI 提示词
+  Future<void> setAiPrompt(String prompt) async {
+    await _preferencesBox.put('aiPrompt', prompt);
+  }
+
   /// 关闭所有boxes
   Future<void> close() async {
     await _assessmentBox.close();

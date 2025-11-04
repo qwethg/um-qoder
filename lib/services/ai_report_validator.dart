@@ -54,7 +54,8 @@ class AiReportValidator {
       ));
     }
     
-    if (report.content.isEmpty) {
+    // 修正：使用空安全的方式检查内容
+    if (report.content == null || report.content!.isEmpty) {
       issues.add(ValidationIssue(
         type: ValidationIssueType.missingData,
         severity: ValidationSeverity.error,
@@ -85,6 +86,11 @@ class AiReportValidator {
   /// 验证内容质量
   static void _validateContentQuality(AiReport report, List<ValidationIssue> issues) {
     final content = report.content;
+
+    // 修正：如果内容为空，则直接返回，因为 _validateBasicData 已处理此问题
+    if (content == null || content.isEmpty) {
+      return;
+    }
     
     // 检查内容长度
     if (content.length < 100) {
@@ -118,6 +124,7 @@ class AiReportValidator {
     // 检查必要的章节
     final requiredSections = ['分析', '建议', '总结'];
     for (final section in requiredSections) {
+      // 修正：在非空内容上调用 contains
       if (!content.contains(section)) {
         issues.add(ValidationIssue(
           type: ValidationIssueType.contentQuality,
@@ -142,18 +149,6 @@ class AiReportValidator {
         message: '报告生成时间超过30天，建议重新生成',
         field: 'createdAt',
       ));
-    }
-    
-    // 检查缓存过期
-    if (report.isCached && report.cacheExpiresAt != null) {
-      if (now.isAfter(report.cacheExpiresAt!)) {
-        issues.add(ValidationIssue(
-          type: ValidationIssueType.outdated,
-          severity: ValidationSeverity.error,
-          message: '缓存已过期',
-          field: 'cacheExpiresAt',
-        ));
-      }
     }
   }
 
@@ -225,18 +220,6 @@ class AiReportValidator {
           severity: ValidationSeverity.warning,
           message: '报告生成时间过长，可能存在性能问题',
           field: 'generationTimeMs',
-        ));
-      }
-    }
-    
-    // 检查用户评分合理性
-    if (report.userRating != null) {
-      if (report.userRating! < 1 || report.userRating! > 5) {
-        issues.add(ValidationIssue(
-          type: ValidationIssueType.structuralError,
-          severity: ValidationSeverity.error,
-          message: '用户评分必须在1-5之间',
-          field: 'userRating',
         ));
       }
     }

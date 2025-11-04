@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import '../utils/opt.dart';
 import 'package:ultimate_wheel/models/assessment.dart';
 import 'package:ultimate_wheel/models/goal_setting.dart';
 
@@ -7,6 +8,8 @@ part 'ai_report.g.dart';
 /// AI 分析报告
 @HiveType(typeId: 3)
 class AiReport extends HiveObject {
+  static const int currentVersion = 1;
+
   /// 报告唯一标识符
   @HiveField(0)
   final String id;
@@ -27,21 +30,21 @@ class AiReport extends HiveObject {
   @HiveField(4)
   final String assessmentId;
 
-  /// 上一次评估记录ID（用于对比分析）
-  @HiveField(5)
-  final String? previousAssessmentId;
-
   /// 输入数据哈希值（用于缓存判断）
-  @HiveField(6)
+  @HiveField(5)
   final String inputHash;
 
   /// AI 生成的报告内容（Markdown格式）
-  @HiveField(7)
-  final String content;
+  @HiveField(6)
+  final String? content;
 
   /// 报告状态
-  @HiveField(8)
+  @HiveField(7)
   final AiReportStatus status;
+
+  /// 错误信息 (如果报告失败)
+  @HiveField(8)
+  final String? error;
 
   /// 生成报告时使用的AI模型
   @HiveField(9)
@@ -51,33 +54,24 @@ class AiReport extends HiveObject {
   @HiveField(10)
   final Map<String, dynamic> apiParameters;
 
-  /// 报告生成耗时（毫秒）
+  /// 报告生成耗时 (毫秒)
   @HiveField(11)
   final int? generationTimeMs;
 
-  /// 报告标签（用于分类和检索）
+  /// 标签
   @HiveField(12)
   final List<String> tags;
 
-  /// 用户评分（1-5星）
-  @HiveField(13)
-  final int? userRating;
-
-  /// 用户反馈
-  @HiveField(14)
-  final String? userFeedback;
-
-  /// 报告摘要（用于快速预览）
-  @HiveField(15)
-  final String? summary;
-
   /// 是否为缓存报告
-  @HiveField(16)
+  @HiveField(13)
   final bool isCached;
 
-  /// 缓存过期时间
-  @HiveField(17)
-  final DateTime? cacheExpiresAt;
+  /// 缓存时间
+  @HiveField(14)
+  final DateTime? cachedAt;
+
+  /// 缓存有效期 (默认30天)
+  static const Duration cacheDuration = Duration(days: 30);
 
   AiReport({
     required this.id,
@@ -85,129 +79,145 @@ class AiReport extends HiveObject {
     required this.updatedAt,
     required this.version,
     required this.assessmentId,
-    this.previousAssessmentId,
     required this.inputHash,
-    required this.content,
+    this.content,
     required this.status,
+    this.error,
     required this.aiModel,
-    required this.apiParameters,
     this.generationTimeMs,
+    this.apiParameters = const {},
     this.tags = const [],
-    this.userRating,
-    this.userFeedback,
-    this.summary,
     this.isCached = false,
-    this.cacheExpiresAt,
+    this.cachedAt,
   });
 
-  /// 创建新报告
-  factory AiReport.create({
+  /// 创建一个进行中的报告
+  factory AiReport.inProgress({
+    required String id,
     required String assessmentId,
-    String? previousAssessmentId,
     required String inputHash,
-    required String content,
     required String aiModel,
-    required Map<String, dynamic> apiParameters,
-    int? generationTimeMs,
-    List<String> tags = const [],
-    String? summary,
-    bool isCached = false,
-    DateTime? cacheExpiresAt,
+    Map<String, dynamic> apiParameters = const {},
   }) {
-    final now = DateTime.now();
     return AiReport(
-      id: _generateId(),
-      createdAt: now,
-      updatedAt: now,
-      version: 1,
+      id: id,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      version: AiReport.currentVersion,
       assessmentId: assessmentId,
-      previousAssessmentId: previousAssessmentId,
       inputHash: inputHash,
-      content: content,
-      status: AiReportStatus.completed,
+      status: AiReportStatus.generating,
       aiModel: aiModel,
       apiParameters: apiParameters,
-      generationTimeMs: generationTimeMs,
-      tags: tags,
-      summary: summary,
-      isCached: isCached,
-      cacheExpiresAt: cacheExpiresAt,
     );
   }
 
-  /// 创建缓存报告副本
-  AiReport copyAsCached({
-    DateTime? cacheExpiresAt,
+  /// 创建一个失败的报告
+  factory AiReport.failed({
+    required String id,
+    required String assessmentId,
+    required String inputHash,
+    String? error,
+    Map<String, dynamic> apiParameters = const {},
   }) {
     return AiReport(
-      id: _generateId(),
+      id: id,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
-      version: version,
+      version: AiReport.currentVersion,
       assessmentId: assessmentId,
-      previousAssessmentId: previousAssessmentId,
+      inputHash: inputHash,
+      status: AiReportStatus.failed,
+      error: error,
+      aiModel: apiParameters['model'] ?? 'unknown',
+      apiParameters: apiParameters,
+    );
+  }
+
+  /// 创建一个完整的、成功的报告
+  factory AiReport.create({
+    required String id,
+    required String assessmentId,
+    required String inputHash,
+    required String content,
+    required String aiModel,
+    AiReportStatus status = AiReportStatus.completed,
+    int? generationTimeMs,
+    Map<String, dynamic> apiParameters = const {},
+    List<String> tags = const [],
+  }) {
+    return AiReport(
+      id: id,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      version: AiReport.currentVersion,
+      assessmentId: assessmentId,
       inputHash: inputHash,
       content: content,
       status: status,
       aiModel: aiModel,
-      apiParameters: apiParameters,
       generationTimeMs: generationTimeMs,
+      apiParameters: apiParameters,
       tags: tags,
-      userRating: userRating,
-      userFeedback: userFeedback,
-      summary: summary,
-      isCached: true,
-      cacheExpiresAt: cacheExpiresAt ?? DateTime.now().add(const Duration(days: 7)),
     );
   }
 
-  /// 更新报告内容
+  /// 复制当前报告并标记为已缓存
+  AiReport copyAsCached() {
+    return copyWith(
+      isCached: true,
+      cachedAt: DateTime.now(),
+    );
+  }
+
   AiReport copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    int? version,
+    String? assessmentId,
+    String? inputHash,
     String? content,
     AiReportStatus? status,
-    int? userRating,
-    String? userFeedback,
-    String? summary,
+    String? error,
+    String? aiModel,
+    int? generationTimeMs,
+    Map<String, dynamic>? apiParameters,
     List<String>? tags,
+    bool? isCached,
+    DateTime? cachedAt,
   }) {
     return AiReport(
-      id: id,
-      createdAt: createdAt,
-      updatedAt: DateTime.now(),
-      version: version + 1,
-      assessmentId: assessmentId,
-      previousAssessmentId: previousAssessmentId,
-      inputHash: inputHash,
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      version: version ?? this.version,
+      assessmentId: assessmentId ?? this.assessmentId,
+      inputHash: inputHash ?? this.inputHash,
       content: content ?? this.content,
       status: status ?? this.status,
-      aiModel: aiModel,
-      apiParameters: apiParameters,
-      generationTimeMs: generationTimeMs,
+      error: error ?? this.error,
+      aiModel: aiModel ?? this.aiModel,
+      generationTimeMs: generationTimeMs ?? this.generationTimeMs,
+      apiParameters: apiParameters ?? this.apiParameters,
       tags: tags ?? this.tags,
-      userRating: userRating ?? this.userRating,
-      userFeedback: userFeedback ?? this.userFeedback,
-      summary: summary ?? this.summary,
-      isCached: isCached,
-      cacheExpiresAt: cacheExpiresAt,
+      isCached: isCached ?? this.isCached,
+      cachedAt: cachedAt ?? this.cachedAt,
     );
   }
 
   /// 检查缓存是否过期
   bool get isCacheExpired {
-    if (!isCached || cacheExpiresAt == null) return false;
-    return DateTime.now().isAfter(cacheExpiresAt!);
+    if (!isCached || cachedAt == null) return false;
+    return DateTime.now().isAfter(cachedAt!.add(cacheDuration));
   }
 
   /// 检查报告是否有效
   bool get isValid {
-    return status == AiReportStatus.completed && 
-           content.isNotEmpty && 
-           (!isCached || !isCacheExpired);
-  }
-
-  /// 生成报告ID
-  static String _generateId() {
-    return 'ai_report_${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecond}';
+    return status == AiReportStatus.completed &&
+        content != null &&
+        content!.isNotEmpty &&
+        (!isCached || !isCacheExpired);
   }
 
   @override
@@ -230,10 +240,6 @@ enum AiReportStatus {
   /// 生成失败
   @HiveField(2)
   failed,
-
-  /// 已过期
-  @HiveField(3)
-  expired,
 }
 
 /// 报告查询条件

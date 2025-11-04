@@ -203,18 +203,12 @@ class AiReportAccessControl {
 
   /// 检查报告是否可访问
   bool _isReportAccessible(AiReport report) {
-    // 检查报告状态
+    // 检查报告状态，失败的报告不可访问
     if (report.status == AiReportStatus.failed) {
       return false;
     }
     
-    // 检查缓存是否过期
-    if (report.isCached && report.cacheExpiresAt != null) {
-      if (DateTime.now().isAfter(report.cacheExpiresAt!)) {
-        return false;
-      }
-    }
-    
+    // 移除了对 isCached 和 cacheExpiresAt 的检查，因为缓存逻辑已重构
     return true;
   }
 

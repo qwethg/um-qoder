@@ -22,26 +22,23 @@ class AiReportAdapter extends TypeAdapter<AiReport> {
       updatedAt: fields[2] as DateTime,
       version: fields[3] as int,
       assessmentId: fields[4] as String,
-      previousAssessmentId: fields[5] as String?,
-      inputHash: fields[6] as String,
-      content: fields[7] as String,
-      status: fields[8] as AiReportStatus,
+      inputHash: fields[5] as String,
+      content: fields[6] as String?,
+      status: fields[7] as AiReportStatus,
+      error: fields[8] as String?,
       aiModel: fields[9] as String,
-      apiParameters: (fields[10] as Map).cast<String, dynamic>(),
       generationTimeMs: fields[11] as int?,
+      apiParameters: (fields[10] as Map).cast<String, dynamic>(),
       tags: (fields[12] as List).cast<String>(),
-      userRating: fields[13] as int?,
-      userFeedback: fields[14] as String?,
-      summary: fields[15] as String?,
-      isCached: fields[16] as bool,
-      cacheExpiresAt: fields[17] as DateTime?,
+      isCached: fields[13] as bool,
+      cachedAt: fields[14] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, AiReport obj) {
     writer
-      ..writeByte(18)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,13 +50,13 @@ class AiReportAdapter extends TypeAdapter<AiReport> {
       ..writeByte(4)
       ..write(obj.assessmentId)
       ..writeByte(5)
-      ..write(obj.previousAssessmentId)
-      ..writeByte(6)
       ..write(obj.inputHash)
-      ..writeByte(7)
+      ..writeByte(6)
       ..write(obj.content)
-      ..writeByte(8)
+      ..writeByte(7)
       ..write(obj.status)
+      ..writeByte(8)
+      ..write(obj.error)
       ..writeByte(9)
       ..write(obj.aiModel)
       ..writeByte(10)
@@ -69,15 +66,9 @@ class AiReportAdapter extends TypeAdapter<AiReport> {
       ..writeByte(12)
       ..write(obj.tags)
       ..writeByte(13)
-      ..write(obj.userRating)
-      ..writeByte(14)
-      ..write(obj.userFeedback)
-      ..writeByte(15)
-      ..write(obj.summary)
-      ..writeByte(16)
       ..write(obj.isCached)
-      ..writeByte(17)
-      ..write(obj.cacheExpiresAt);
+      ..writeByte(14)
+      ..write(obj.cachedAt);
   }
 
   @override
@@ -104,8 +95,6 @@ class AiReportStatusAdapter extends TypeAdapter<AiReportStatus> {
         return AiReportStatus.completed;
       case 2:
         return AiReportStatus.failed;
-      case 3:
-        return AiReportStatus.expired;
       default:
         return AiReportStatus.generating;
     }
@@ -122,9 +111,6 @@ class AiReportStatusAdapter extends TypeAdapter<AiReportStatus> {
         break;
       case AiReportStatus.failed:
         writer.writeByte(2);
-        break;
-      case AiReportStatus.expired:
-        writer.writeByte(3);
         break;
     }
   }

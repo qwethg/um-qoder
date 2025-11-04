@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,7 @@ import '../providers/goal_setting_provider.dart';
 import '../providers/assessment_provider.dart';
 import '../models/goal_setting.dart';
 import '../config/constants.dart';
+import '../models/ai_report.dart';
 
 /// AI 分析结果显示组件
 /// 支持三种状态：未生成、生成中、已生成
@@ -57,19 +59,19 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
     final lines = fullReport.split('\n');
     bool foundOverallSection = false;
     final summaryLines = <String>[];
-    
+
     for (final line in lines) {
       if (line.contains('## 📊 总体评价') || line.contains('总体评价')) {
         foundOverallSection = true;
         continue;
       }
-      
+
       if (foundOverallSection) {
         if (line.startsWith('##') && !line.contains('总体评价')) {
           // 遇到下一个章节，停止提取
           break;
         }
-        
+
         if (line.trim().isNotEmpty) {
           summaryLines.add(line.trim());
           // 提取前2-3句话作为摘要
@@ -79,7 +81,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
         }
       }
     }
-    
+
     return summaryLines.join(' ').trim();
   }
 
@@ -94,12 +96,13 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
       final prefsProvider = Provider.of<PreferencesProvider>(context, listen: false);
       final goalProvider = Provider.of<GoalSettingProvider>(context, listen: false);
       final assessmentProvider = Provider.of<AssessmentProvider>(context, listen: false);
-      
+      final storageService = Provider.of<StorageService>(context, listen: false);
+
       // 检查 API Key
       if (prefsProvider.apiKey.isEmpty) {
         throw Exception('请先在设置中配置 API Key');
       }
-      
+
       // 获取用户目标设定
       final goalSettings = <String, GoalSetting>{};
       for (final ability in AbilityConstants.abilities) {
@@ -108,32 +111,46 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
           goalSettings[ability.id] = setting;
         }
       }
-      
-      // 获取上一次评估记录（用于对比）
-      final allAssessments = assessmentProvider.assessments;
-      final currentIndex = allAssessments.indexWhere((a) => a.id == widget.assessment.id);
-      final previousAssessment = currentIndex < allAssessments.length - 1
-          ? allAssessments[currentIndex + 1]
-          : null;
 
-      final aiService = AiService();
-      final analysisContent = await aiService.generateAnalysis(
-        currentAssessment: widget.assessment,
-        userGoalSettings: goalSettings,
-        previousAssessment: previousAssessment,
-        apiKey: prefsProvider.apiKey,
+      final aiService = AiService(storageService, apiKey: prefsProvider.apiKey);
+      final reportStream = aiService.generateReport(
+        assessment: widget.assessment,
+        goalSettings: goalSettings,
       );
-      
+
+      String finalContent = '';
+      await for (final report in reportStream) {
+        if (mounted) {
+          setState(() {
+            // 在流式传输期间更新内容
+            if (report.status == AiReportStatus.generating) {
+              finalContent = report.content ?? '';
+              final updatedAssessment = widget.assessment.copyWith(
+                aiAnalysisContent: finalContent,
+              );
+              widget.onAssessmentUpdated(updatedAssessment);
+            }
+          });
+        }
+
+        if (report.status == AiReportStatus.completed) {
+          finalContent = report.content ?? '';
+        } else if (report.status == AiReportStatus.failed) {
+          // 失败时，直接抛出包含具体错误信息的异常
+          throw Exception(report.error ?? '生成 AI 分析时发生未知错误');
+        }
+      }
+
       // 提取摘要
-      final summary = _extractSummaryFromReport(analysisContent);
-      
+      final summary = _extractSummaryFromReport(finalContent);
+
       // 创建更新后的评估对象
       final updatedAssessment = widget.assessment.copyWith(
-        aiAnalysisContent: analysisContent,
+        aiAnalysisContent: finalContent,
         aiAnalysisGeneratedAt: DateTime.now(),
         aiAnalysisSummary: summary,
       );
-      
+
       // 通知父组件更新
       widget.onAssessmentUpdated(updatedAssessment);
     } catch (e) {
