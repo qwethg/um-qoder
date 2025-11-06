@@ -10,6 +10,7 @@ import '../providers/goal_setting_provider.dart';
 import '../providers/assessment_provider.dart';
 import '../models/goal_setting.dart';
 import '../config/constants.dart';
+import 'package:ultimate_wheel/providers/settings_provider.dart';
 import '../models/ai_report.dart';
 
 /// AI 分析结果显示组件
@@ -97,6 +98,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
       final goalProvider = Provider.of<GoalSettingProvider>(context, listen: false);
       final assessmentProvider = Provider.of<AssessmentProvider>(context, listen: false);
       final storageService = Provider.of<StorageService>(context, listen: false);
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
 
       // 检查 API Key
       if (prefsProvider.apiKey.isEmpty) {
@@ -112,7 +114,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
         }
       }
 
-      final aiService = AiService(storageService, apiKey: prefsProvider.apiKey);
+      final aiService = AiService(storageService, settingsProvider, apiKey: prefsProvider.apiKey);
       final reportStream = aiService.generateReport(
         assessment: widget.assessment,
         goalSettings: goalSettings,
@@ -186,7 +188,8 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
 
   @override
   Widget build(BuildContext context) {
-    final hasAnalysis = widget.assessment.aiAnalysisContent != null;
+    final hasAnalysis = widget.assessment.aiAnalysisContent != null &&
+        widget.assessment.aiAnalysisContent!.trim().isNotEmpty;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

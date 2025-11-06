@@ -10,6 +10,7 @@ import 'package:ultimate_wheel/services/storage_service.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
 import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
 import 'package:ultimate_wheel/providers/preferences_provider.dart';
+import 'package:ultimate_wheel/providers/settings_provider.dart';
 import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 
 void main() {
@@ -54,6 +55,7 @@ class UltimateWheelApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<StorageService>.value(value: storageService),
         ChangeNotifierProvider(
           create: (_) => PreferencesProvider(storageService),
         ),
@@ -62,6 +64,9 @@ class UltimateWheelApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => GoalSettingProvider(storageService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => SettingsProvider(storageService),
         ),
         ChangeNotifierProvider.value(
           value: radarThemeProvider,

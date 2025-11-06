@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
 import 'package:ultimate_wheel/providers/preferences_provider.dart';
 import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
+import 'package:ultimate_wheel/providers/settings_provider.dart';
 import 'package:ultimate_wheel/widgets/api_key_tutorial_dialog.dart';
 import 'package:ultimate_wheel/widgets/radar_theme_preview.dart';
 
@@ -384,7 +385,7 @@ class _AiPromptDialogState extends State<_AiPromptDialog> {
   @override
   void initState() {
     super.initState();
-    final aiPrompt = context.read<PreferencesProvider>().aiPrompt;
+    final aiPrompt = context.read<SettingsProvider>().prompt;
     _promptController = TextEditingController(text: aiPrompt);
   }
 
@@ -396,7 +397,7 @@ class _AiPromptDialogState extends State<_AiPromptDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.read<PreferencesProvider>();
+    final provider = context.read<SettingsProvider>();
 
     return AlertDialog(
       title: const Text('编辑 AI 教练提示词'),
@@ -411,8 +412,8 @@ class _AiPromptDialogState extends State<_AiPromptDialog> {
       actions: [
         TextButton(
           onPressed: () {
-            provider.restoreDefaultAiSettings();
-            _promptController.text = provider.aiPrompt;
+            provider.restoreDefaultPrompt();
+            _promptController.text = provider.prompt;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('提示词已恢复为默认设置'),
@@ -428,7 +429,7 @@ class _AiPromptDialogState extends State<_AiPromptDialog> {
         ),
         FilledButton(
           onPressed: () {
-            provider.updateAiPrompt(_promptController.text);
+            provider.setPrompt(_promptController.text);
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -458,7 +459,7 @@ class _AiModelCardState extends State<_AiModelCard> {
   @override
   void initState() {
     super.initState();
-    final aiModel = context.read<PreferencesProvider>().aiModel;
+    final aiModel = context.read<SettingsProvider>().modelName;
     _modelController = TextEditingController(text: aiModel);
   }
 
@@ -470,7 +471,7 @@ class _AiModelCardState extends State<_AiModelCard> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<PreferencesProvider>();
+    final provider = context.watch<SettingsProvider>();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -509,15 +510,15 @@ class _AiModelCardState extends State<_AiModelCard> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.hub_outlined),
               ),
-              onChanged: (value) => provider.updateAiModel(value),
+              onChanged: (value) => provider.setModelName(value),
             ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () {
-                  provider.restoreDefaultAiSettings();
-                  _modelController.text = provider.aiModel;
+                  provider.restoreDefaultModelName();
+                  _modelController.text = provider.modelName;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('AI 模型已恢复为默认设置'),

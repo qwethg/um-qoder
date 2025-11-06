@@ -80,20 +80,12 @@ class _WithAssessmentsView extends StatelessWidget {
             // 最新评估的雷达图
             _RadarChartCard(assessment: assessment, currentTheme: currentTheme),
             // 性能优化: 添加 const 关键字。
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // 总分
             _TotalScoreCard(totalScore: assessment.totalScore),
             // 性能优化: 添加 const 关键字。
-            const SizedBox(height: 16),
-
-            // 分区得分标题
-            Text(
-              '分区得分',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            // 性能优化: 添加 const 关键字。
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
 
             // 分区得分卡片
             IntrinsicHeight(

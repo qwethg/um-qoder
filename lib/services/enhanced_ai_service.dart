@@ -27,12 +27,16 @@ import 'package:uuid/uuid.dart';
 class EnhancedAiService {
   final String apiKey;
   final StorageService storageService;
+  final String modelName;
+  final String prompt;
   final AiReportAccessControl _accessControl = AiReportAccessControl();
 
   /// 构造函数
   EnhancedAiService({
     required this.apiKey,
     required this.storageService,
+    required this.modelName,
+    required this.prompt,
   });
 
   String _calculateInputHash(
@@ -65,8 +69,6 @@ class EnhancedAiService {
     bool forceRefresh = false,
   }) async* {
     final userId = assessment.id; // 使用评估ID作为用户标识
-    final modelName = storageService.aiModel;
-    final systemPrompt = storageService.aiPrompt;
     final reportId = const Uuid().v4();
     final inputHash = _calculateInputHash(assessment, goalSettings);
 
@@ -118,7 +120,7 @@ class EnhancedAiService {
         assessment: assessment,
         goalSettings: goalSettings,
         modelName: modelName,
-        systemPrompt: systemPrompt,
+        systemPrompt: prompt,
       );
 
       String content = '';
@@ -195,7 +197,7 @@ class EnhancedAiService {
 
     final request = http.Request(
       'POST',
-      Uri.parse('https://api.openai.com/v1/chat/completions'),
+      Uri.parse('https://api.siliconflow.cn/v1/chat/completions'),
     );
 
     request.headers.addAll({
@@ -209,7 +211,7 @@ class EnhancedAiService {
       'stream': true, // 启用流式响应
     });
 
-    final streamedResponse = await request.send();
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
 
     if (streamedResponse.statusCode != 200) {
       final errorBody = await streamedResponse.stream.bytesToString();

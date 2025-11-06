@@ -7,6 +7,7 @@ import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/models/ai_report.dart';
 import 'package:ultimate_wheel/config/constants.dart';
 import 'package:ultimate_wheel/services/enhanced_ai_service.dart';
+import 'package:ultimate_wheel/providers/settings_provider.dart';
 import 'package:ultimate_wheel/services/storage_service.dart';
 
 /// AI 智能分析服务
@@ -16,11 +17,14 @@ import 'package:ultimate_wheel/services/storage_service.dart';
 class AiService {
   final StorageService _storageService;
   late final EnhancedAiService _enhancedService;
+  final SettingsProvider _settingsProvider;
 
-  AiService(this._storageService, {required String apiKey}) {
+  AiService(this._storageService, this._settingsProvider, {required String apiKey}) {
     _enhancedService = EnhancedAiService(
       apiKey: apiKey,
       storageService: _storageService,
+      modelName: _settingsProvider.modelName,
+      prompt: _settingsProvider.prompt,
     );
   }
 
