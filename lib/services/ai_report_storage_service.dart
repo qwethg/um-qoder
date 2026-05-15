@@ -12,6 +12,7 @@ class AiReportStorageService {
   
   late Box<AiReport> _reportBox;
   late Box _cacheIndexBox;
+  int _cacheTtlDays = 30;
 
   /// 初始化存储服务
   Future<void> initialize() async {
@@ -31,6 +32,10 @@ class AiReportStorageService {
     await _cleanupExpiredCache();
   }
 
+  void setCacheTtlDays(int days) {
+    _cacheTtlDays = days.clamp(1, 365);
+  }
+
   /// 保存AI报告
   Future<void> saveReport(AiReport report) async {
     await _reportBox.put(report.id, report);
@@ -39,6 +44,18 @@ class AiReportStorageService {
     if (report.isCached) {
       await _updateCacheIndex(report);
     }
+  }
+
+  /// 保存AI报告并确保同一评估仅保留一个最终报告
+  Future<void> saveUniqueReportForAssessment(AiReport report) async {
+    final existingReports = getReportsByAssessmentId(report.assessmentId);
+    for (final r in existingReports) {
+      if (r.isCached) {
+        await _cacheIndexBox.delete(r.inputHash);
+      }
+      await _reportBox.delete(r.id);
+    }
+    await _reportBox.put(report.id, report);
   }
 
   /// 根据输入哈希查找缓存报告
@@ -55,8 +72,7 @@ class AiReportStorageService {
       return null;
     }
 
-    // 检查是否过期
-    if (report.isCacheExpired) {
+    if (_isExpired(report)) {
       await _removeCachedReport(inputHash, cachedReportId);
       return null;
     }
@@ -280,12 +296,18 @@ class AiReportStorageService {
   Future<void> _cleanupExpiredCache() async {
     final now = DateTime.now();
     final expiredReports = _reportBox.values
-        .where((report) => report.isCached && report.isCacheExpired)
+        .where((report) => report.isCached && _isExpired(report))
         .toList();
 
     for (final report in expiredReports) {
       await _removeCachedReport(report.inputHash, report.id);
     }
+  }
+
+  bool _isExpired(AiReport report) {
+    if (!report.isCached || report.cachedAt == null) return false;
+    final ttl = Duration(days: _cacheTtlDays);
+    return DateTime.now().isAfter(report.cachedAt!.add(ttl));
   }
 
   /// 关闭存储服务

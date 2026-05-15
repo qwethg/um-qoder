@@ -82,62 +82,73 @@ class RadarThemeManagerScreen extends StatelessWidget {
     RadarTheme currentTheme,
     Function(RadarTheme) onSelect,
   ) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: themes.length,
-      itemBuilder: (context, index) {
-        final theme = themes[index];
-        return RadarThemePreview(
-          theme: theme,
-          isSelected: theme.id == currentTheme.id,
-          onTap: () => onSelect(theme),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final double maxExtent = w < 600 ? 200.0 : w < 900 ? 220.0 : w < 1200 ? 240.0 : 260.0;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: maxExtent,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.95,
+          ),
+          itemCount: themes.length,
+          itemBuilder: (context, index) {
+            final theme = themes[index];
+            return RadarThemePreview(
+              theme: theme,
+              isSelected: theme.id == currentTheme.id,
+              onTap: () => onSelect(theme),
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildCustomThemeGrid(BuildContext context, RadarThemeProvider provider) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: provider.customThemes.length,
-      itemBuilder: (context, index) {
-        final theme = provider.customThemes[index];
-        return Stack(
-          children: [
-            RadarThemePreview(
-              theme: theme,
-              isSelected: theme.id == provider.currentTheme.id,
-              onTap: () => provider.setTheme(theme),
-            ),
-            // 删除按钮
-            Positioned(
-              top: 0,
-              right: 0,
-              child: IconButton(
-                icon: const Icon(Icons.close, size: 18),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.shade100,
-                  foregroundColor: Colors.red.shade700,
-                  padding: const EdgeInsets.all(4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final double maxExtent = w < 600 ? 200.0 : w < 900 ? 220.0 : w < 1200 ? 240.0 : 260.0;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: maxExtent,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.95,
+          ),
+          itemCount: provider.customThemes.length,
+          itemBuilder: (context, index) {
+            final theme = provider.customThemes[index];
+            return Stack(
+              children: [
+                RadarThemePreview(
+                  theme: theme,
+                  isSelected: theme.id == provider.currentTheme.id,
+                  onTap: () => provider.setTheme(theme),
                 ),
-                onPressed: () => _confirmDeleteTheme(context, provider, theme),
-              ),
-            ),
-          ],
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.red.shade100,
+                      foregroundColor: Colors.red.shade700,
+                      padding: const EdgeInsets.all(4),
+                    ),
+                    onPressed: () => _confirmDeleteTheme(context, provider, theme),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );

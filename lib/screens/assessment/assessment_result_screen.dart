@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +14,8 @@ import 'package:ultimate_wheel/services/share_service.dart';
 import 'package:ultimate_wheel/widgets/ai_analysis_section.dart';
 import 'package:ultimate_wheel/widgets/radar_theme_preview.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
+import 'package:file_selector/file_selector.dart';
+import 'dart:async';
 
 // 性能优化: 将原 StatefulWidget 拆分为 StatelessWidget，仅负责获取数据。
 class AssessmentResultScreen extends StatelessWidget {
@@ -150,10 +153,7 @@ class _ResultContentState extends State<_ResultContent> {
       ),
     );
 
-    if (selectedTheme != null) {
-      // 用户选择了主题并确认分享
-      await _handleShare();
-    }
+    if (selectedTheme != null) {}
 
     // 重置预览主题，避免影响主页面的主题显示
     if (mounted) {
@@ -580,17 +580,28 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
   late RadarTheme _selectedTheme;
   late ScrollController _scrollController;
   static const double _itemWidth = 112.0;
+  bool _showSummary = true;
+  bool _showCategoryScores = false;
+  bool _showTotalScore = true;
+  bool _isProcessing = false;
+  final TextEditingController _saveDirController = TextEditingController();
+  // 移除用户自定义图片尺寸与像素密度，使用固定生成逻辑
+  Uint8List? _previewBytes;
+  Timer? _previewDebounce;
 
   @override
   void initState() {
     super.initState();
     _selectedTheme = widget.currentTheme;
     _scrollController = ScrollController();
+    _updatePreview();
   }
 
   @override
   void dispose() {
+    _saveDirController.dispose();
     _scrollController.dispose();
+    _previewDebounce?.cancel();
     super.dispose();
   }
 
@@ -607,85 +618,268 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      height: MediaQuery.of(context).size.height * 0.75,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '选择主题分享',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          // 性能优化: 添加 const 关键字。
-          const SizedBox(height: 16),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: UltimateWheelRadarChart(
-                scores: widget.assessment.scores,
-                size: 220,
-                radarTheme: _selectedTheme,
-              ),
-            ),
-          ),
-          // 性能优化: 添加 const 关键字。
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final isWide = w >= 720;
+          final sheetMaxHeight = MediaQuery.of(context).size.height * 0.85;
+          final radarPreviewSize = isWide ? 240.0 : 200.0;
+
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: sheetMaxHeight),
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '选择主题分享',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: UltimateWheelRadarChart(
+                        scores: widget.assessment.scores,
+                        size: radarPreviewSize,
+                        radarTheme: _selectedTheme,
+                      ),
+                    ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 140,
+            height: 48,
             child: Row(
               children: [
-                _ScrollButton(icon: Icons.chevron_left, onPressed: () => _scroll(true)),
-                // 性能优化: 添加 const 关键字。
-                const SizedBox(width: 8),
                 Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: widget.allThemes.length,
-                    itemBuilder: (context, index) {
-                      final theme = widget.allThemes[index];
-                      return Padding(
-                        // 性能优化: 添加 const 关键字。
-                        padding: const EdgeInsets.only(right: 12),
-                        child: RadarThemePreview(
-                          theme: theme,
-                          size: 100,
-                          isSelected: theme.id == _selectedTheme.id,
-                          onTap: () {
-                            setState(() => _selectedTheme = theme);
-                            widget.onThemeChanged(theme);
-                          },
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final picked = await Navigator.of(context).push<RadarTheme?>(
+                        MaterialPageRoute(
+                          builder: (_) => _ThemePickerPage(
+                            allThemes: widget.allThemes,
+                            initial: _selectedTheme,
+                          ),
                         ),
                       );
+                      if (picked != null) {
+                        setState(() => _selectedTheme = picked);
+                        widget.onThemeChanged(picked);
+                        _updatePreview();
+                      }
                     },
+                    child: Text('选择雷达主题：${_selectedTheme.name}'),
                   ),
                 ),
-                // 性能优化: 添加 const 关键字。
-                const SizedBox(width: 8),
-                _ScrollButton(icon: Icons.chevron_right, onPressed: () => _scroll(false)),
               ],
             ),
           ),
-          // 性能优化: 添加 const 关键字。
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () => Navigator.pop(context, _selectedTheme),
-              // 性能优化: 添加 const 关键字。
-              child: const Text('确认分享'),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('预览图片', style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: isWide ? 360 : 280,
+                            child: Center(
+                              child: _previewBytes != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.memory(
+                                        _previewBytes!,
+                                        fit: BoxFit.contain,
+                                        width: double.infinity,
+                                        filterQuality: FilterQuality.high,
+                                      ),
+                                    )
+                                  : const CircularProgressIndicator(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('显示AI教练总体评价'),
+                            value: _showSummary,
+                            onChanged: (v) {
+                              setState(() => _showSummary = v);
+                              _schedulePreviewUpdate();
+                            },
+                          ),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('显示分区得分'),
+                            value: _showCategoryScores,
+                            onChanged: (v) {
+                              setState(() => _showCategoryScores = v);
+                              _schedulePreviewUpdate();
+                            },
+                          ),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('显示总分'),
+                            value: _showTotalScore,
+                            onChanged: (v) {
+                              setState(() => _showTotalScore = v);
+                              _schedulePreviewUpdate();
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                      const SizedBox.shrink(),
+                          const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _saveDirController,
+                              decoration: InputDecoration(
+                                labelText: '保存目录(可选)',
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.folder_open),
+                                  onPressed: _pickSaveDirectory,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isProcessing ? null : () async {
+                              setState(() => _isProcessing = true);
+                              final service = ShareService();
+                    final bytes = await service.generateAssessmentImageBytes(
+                      assessment: widget.assessment,
+                      theme: _selectedTheme,
+                      includeSummary: _showSummary,
+                      includeCategoryScores: _showCategoryScores,
+                      includeTotalScore: _showTotalScore,
+                    );
+                              await service.saveImageToLocal(
+                                context: context,
+                                imageBytes: bytes,
+                                fileNamePrefix: 'ultimate_wheel',
+                                customDirPath: _saveDirController.text.trim().isEmpty ? null : _saveDirController.text.trim(),
+                              );
+                              if (mounted) {
+                                setState(() => _isProcessing = false);
+                                Navigator.pop(context, _selectedTheme);
+                              }
+                            },
+                            icon: const Icon(Icons.save_alt),
+                            label: const Text('保存图片到本地'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: _isProcessing ? null : () async {
+                              setState(() => _isProcessing = true);
+                              final service = ShareService();
+                    final bytes = await service.generateAssessmentImageBytes(
+                      assessment: widget.assessment,
+                      theme: _selectedTheme,
+                      includeSummary: _showSummary,
+                      includeCategoryScores: _showCategoryScores,
+                      includeTotalScore: _showTotalScore,
+                    );
+                              final shareText = '我的Ultimate Wheel评估结果\n评估时间：${DateFormat('yyyy-MM-dd HH:mm').format(widget.assessment.createdAt)}\n总分：${widget.assessment.totalScore.toStringAsFixed(1)}\n\n#极限飞盘 #UltimateWheel';
+                              await service.shareImageBytes(
+                                context: context,
+                                imageBytes: bytes,
+                                shareText: shareText,
+                                fileName: 'ultimate_wheel_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.png',
+                              );
+                              if (mounted) {
+                                setState(() => _isProcessing = false);
+                                Navigator.pop(context, _selectedTheme);
+                              }
+                            },
+                            icon: const Icon(Icons.share),
+                            label: const Text('直接分享'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _updatePreview() async {
+    final service = ShareService();
+    final bytes = await service.generateAssessmentImageBytes(
+      assessment: widget.assessment,
+      theme: _selectedTheme,
+      includeSummary: _showSummary,
+      includeCategoryScores: _showCategoryScores,
+      includeTotalScore: _showTotalScore,
+    );
+    if (mounted) {
+      setState(() => _previewBytes = bytes);
+    }
+  }
+  void _schedulePreviewUpdate([int ms = 200]) {
+    _previewDebounce?.cancel();
+    _previewDebounce = Timer(Duration(milliseconds: ms), () {
+      _updatePreview();
+    });
+  }
+
+  Future<void> _pickSaveDirectory() async {
+    try {
+      final dir = await getDirectoryPath();
+      if (dir != null && dir.trim().isNotEmpty) {
+        setState(() => _saveDirController.text = dir.trim());
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('未选择目录或平台不支持目录选择')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('选择目录失败：$e')),
+        );
+      }
+    }
   }
 }
 
@@ -707,6 +901,76 @@ class _ScrollButton extends StatelessWidget {
         style: IconButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           foregroundColor: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
+}
+class _ThemePickerPage extends StatefulWidget {
+  final List<RadarTheme> allThemes;
+  final RadarTheme initial;
+  const _ThemePickerPage({required this.allThemes, required this.initial});
+
+  @override
+  State<_ThemePickerPage> createState() => _ThemePickerPageState();
+}
+
+class _ThemePickerPageState extends State<_ThemePickerPage> {
+  late RadarTheme _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initial;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('选择雷达主题'),
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, _current),
+            child: const Text('确认'),
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+          ),
+          itemCount: widget.allThemes.length,
+          itemBuilder: (context, index) {
+            final theme = widget.allThemes[index];
+            return InkWell(
+              onTap: () => setState(() => _current = theme),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.id == _current.id
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.outline,
+                    width: theme.id == _current.id ? 2 : 1,
+                  ),
+                ),
+                child: Center(
+                  child: RadarThemePreview(
+                    theme: theme,
+                    size: 100,
+                    isSelected: theme.id == _current.id,
+                    onTap: () => setState(() => _current = theme),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

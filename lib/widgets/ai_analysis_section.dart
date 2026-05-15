@@ -33,6 +33,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
     with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   bool _isGenerating = false;
+  StreamSubscription<AiReport>? _subscription;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
 
@@ -51,6 +52,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
 
   @override
   void dispose() {
+    _subscription?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -121,7 +123,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
       );
 
       String finalContent = '';
-      await for (final report in reportStream) {
+      _subscription = reportStream.listen((report) async {
         if (mounted) {
           setState(() {
             // 在流式传输期间更新内容
@@ -141,7 +143,8 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
           // 失败时，直接抛出包含具体错误信息的异常
           throw Exception(report.error ?? '生成 AI 分析时发生未知错误');
         }
-      }
+      });
+      await _subscription!.asFuture();
 
       // 提取摘要
       final summary = _extractSummaryFromReport(finalContent);
@@ -171,6 +174,16 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
           _isGenerating = false;
         });
       }
+    }
+  }
+
+  void _cancelGeneration() async {
+    await _subscription?.cancel();
+    _subscription = null;
+    if (mounted) {
+      setState(() {
+        _isGenerating = false;
+      });
     }
   }
 
@@ -212,6 +225,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
             isExpanded: _isExpanded,
             assessment: widget.assessment,
             onToggleExpanded: _toggleExpanded,
+            onCancel: _cancelGeneration,
           ),
           
           // 展开的内容区域
@@ -236,6 +250,7 @@ class _HeaderSection extends StatelessWidget {
   final bool isExpanded;
   final Assessment assessment;
   final VoidCallback onToggleExpanded;
+  final VoidCallback onCancel;
 
   const _HeaderSection({
     required this.isGenerating,
@@ -243,6 +258,7 @@ class _HeaderSection extends StatelessWidget {
     required this.isExpanded,
     required this.assessment,
     required this.onToggleExpanded,
+    required this.onCancel,
   });
 
   @override
@@ -282,7 +298,7 @@ class _HeaderSection extends StatelessWidget {
                   const SizedBox(height: 4),
                   if (isGenerating)
                     const Text(
-                      'AI 教练分析中...',
+                      'AI 教练分析中...可能需要几分钟，请耐心等待，不要切换到其它页面',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.blue,
@@ -310,13 +326,23 @@ class _HeaderSection extends StatelessWidget {
               ),
             ),
             if (isGenerating)
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: onCancel,
+                    child: const Text('取消'),
+                  ),
+                ],
               )
             else if (hasAnalysis)
               AnimatedRotation(

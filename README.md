@@ -38,3 +38,44 @@
 项目已完成所有核心功能的开发，包括数据层、评估流程、雷达图绘制、历史分析、AI 报告和分享功能。目前项目功能完备，体验流畅。
 
 详细的开发历程请参考 [log.md](log.md)。
+
+## 📘 运行与构建指南
+
+- 安装依赖：`flutter pub get`
+- 本地运行（Web）：`flutter run -d chrome`
+- 释放构建（Web）：`flutter build web --release`
+- 清理重构建：`flutter clean && flutter pub get && flutter build web --release`
+
+提示：如使用 GitHub Pages，请在构建时设置基础路径：`flutter build web --release --base-href "/UW-qoder/"`（其中 `UW-qoder` 为仓库名）。
+
+## 🛠️ 部署说明（统一）
+
+- GitHub Pages（通过 CI 构建发布）
+  - 构建命令：`flutter build web --release --base-href "/UW-qoder/"`
+  - 发布目录：`build/web`
+  - 访问路径示例：`https://<your-username>.github.io/UW-qoder/`
+- Netlify（`netlify.toml` 已配置）
+  - 构建命令：`flutter build web --release`
+  - 发布目录：`build/web`
+  - SPA 路由重写：`/* → /index.html`（状态 200）
+  - 统一安全头：`X-Frame-Options=DENY`、`X-XSS-Protection=1; mode=block`、`X-Content-Type-Options=nosniff`、`Referrer-Policy=strict-origin-when-cross-origin`
+  - 静态资源缓存：`*.js|*.css|*.woff2` 长缓存（immutable）
+- Vercel（`vercel.json` 已配置）
+  - 输出目录：`build/web`
+  - 路由重写：`/(.*) → /index.html`
+  - 统一安全头：同上，并追加 `Referrer-Policy=strict-origin-when-cross-origin`
+  - 静态资源缓存：`js|css|woff|woff2|ttf|eot|ico|png|jpg|jpeg|gif|svg` 长缓存（immutable）
+
+建议：为 SPA 提高更新即时性，可为 `/index.html` 设置短缓存（例如 `Cache-Control: public, max-age=0, must-revalidate`）。
+
+## 🔐 AI 设置与 Key 说明
+
+- 模式：用户自备 SiliconFlow API Key（无需后端，Key 本地存储）。
+- 设置入口：应用内 `设置 → AI 设置`，输入并保存 Key。
+- 校验与提示：
+  - 未配置时，评估结果页与首页的 AI 分析卡片会提示“去设置”。
+  - 保存后即可触发分析，结果以 Markdown 展示。
+- 安全建议：
+  - 避免在公共设备保存 Key。
+  - 如需更换 Key，先清空后再保存新值。
+  - 生产环境建议将日志级别调整为 `warning`，避免 Key 相关信息在日志中暴露。

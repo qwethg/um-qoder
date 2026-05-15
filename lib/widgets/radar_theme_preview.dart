@@ -6,7 +6,7 @@ import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
 /// 雷达图主题预览组件
 class RadarThemePreview extends StatelessWidget {
   final RadarTheme theme;
-  final double size;
+  final double? size;
   final bool showName;
   final VoidCallback? onTap;
   final bool isSelected;
@@ -14,7 +14,7 @@ class RadarThemePreview extends StatelessWidget {
   const RadarThemePreview({
     super.key,
     required this.theme,
-    this.size = 120,
+    this.size,
     this.showName = true,
     this.onTap,
     this.isSelected = false,
@@ -22,58 +22,60 @@ class RadarThemePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 创建示例数据（均匀分布的样本）
     final sampleScores = <String, double>{};
     for (var ability in AbilityConstants.abilities) {
-      sampleScores[ability.id] = 6.5 + (ability.order % 3) * 1.0; // 6.5, 7.5, 8.5循环
+      sampleScores[ability.id] = 6.5 + (ability.order % 3) * 1.0;
     }
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: isSelected 
-                ? Theme.of(context).colorScheme.primary 
-                : Colors.transparent,
-            width: 2,
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tileWidth = constraints.maxWidth;
+        final previewSize = ((size ?? tileWidth * 0.8).clamp(100.0, 320.0)).toDouble();
+        return InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 雷达图预览
-            Container(
-              width: size,
-              height: size,
-              padding: const EdgeInsets.all(8),
-              child: UltimateWheelRadarChart(
-                scores: sampleScores,
-                size: size - 16,
-                showLabels: false,
-                showGrid: true,
-                gridLevels: 5,
-                radarTheme: theme,
-              ),
-            ),
-            // 主题名称
-            if (showName)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(
-                  theme.name,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: previewSize,
+                  height: previewSize,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: SizedBox.square(
+                      dimension: 240,
+                      child: UltimateWheelRadarChart(
+                        scores: sampleScores,
+                        size: 240,
+                        showLabels: false,
+                        showGrid: true,
+                        gridLevels: 5,
+                        radarTheme: theme,
+                        showStroke: isSelected,
+                      ),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-          ],
-        ),
-      ),
+                if (showName)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      theme.name,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -33,6 +33,7 @@ class SettingsScreen extends StatelessWidget {
           _SectionHeader('AI 设置'),
           _ApiKeyCard(),
           _AiModelCard(),
+          _AiParametersCard(),
           _AiPromptTile(),
           Divider(),
 
@@ -451,6 +452,162 @@ class _AiModelCard extends StatefulWidget {
 
   @override
   State<_AiModelCard> createState() => _AiModelCardState();
+}
+
+/// AI 参数设置卡片
+class _AiParametersCard extends StatefulWidget {
+  const _AiParametersCard();
+
+  @override
+  State<_AiParametersCard> createState() => _AiParametersCardState();
+}
+
+class _AiParametersCardState extends State<_AiParametersCard> {
+  late final TextEditingController _maxTokensController;
+
+  @override
+  void initState() {
+    super.initState();
+    final settings = context.read<SettingsProvider>();
+    _maxTokensController = TextEditingController(text: settings.maxTokens.toString());
+  }
+
+  @override
+  void dispose() {
+    _maxTokensController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<SettingsProvider>();
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.tune,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'AI 参数',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Temperature（创造性）',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: provider.temperature,
+                    min: 0.0,
+                    max: 1.5,
+                    divisions: 30,
+                    label: provider.temperature.toStringAsFixed(2),
+                    onChanged: (v) => provider.setTemperature(double.parse(v.toStringAsFixed(2))),
+                  ),
+                ),
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    provider.temperature.toStringAsFixed(2),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Max Tokens（输出长度上限）',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _maxTokensController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.text_decrease),
+                hintText: '例如 2048',
+              ),
+              onSubmitted: (v) {
+                final parsed = int.tryParse(v.trim());
+                if (parsed != null && parsed > 0) {
+                  provider.setMaxTokens(parsed);
+                } else {
+                  _maxTokensController.text = provider.maxTokens.toString();
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '缓存有效期（天）',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: provider.cacheTtlDays.toDouble(),
+                    min: 7,
+                    max: 90,
+                    divisions: 83,
+                    label: provider.cacheTtlDays.toString(),
+                    onChanged: (v) => provider.setCacheTtlDays(v.round()),
+                  ),
+                ),
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    '${provider.cacheTtlDays}天',
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      provider.restoreDefaultTemperature();
+                      provider.restoreDefaultMaxTokens();
+                      provider.restoreDefaultCacheTtlDays();
+                      _maxTokensController.text = provider.maxTokens.toString();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('AI 参数已恢复默认'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.refresh_outlined),
+                    label: const Text('恢复默认参数'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _AiModelCardState extends State<_AiModelCard> {

@@ -25,6 +25,8 @@ class AiService {
       storageService: _storageService,
       modelName: _settingsProvider.modelName,
       prompt: _settingsProvider.prompt,
+      temperature: _settingsProvider.temperature,
+      maxTokens: _settingsProvider.maxTokens,
     );
   }
 

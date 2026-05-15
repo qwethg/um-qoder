@@ -29,6 +29,8 @@ class EnhancedAiService {
   final StorageService storageService;
   final String modelName;
   final String prompt;
+  final double temperature;
+  final int maxTokens;
   final AiReportAccessControl _accessControl = AiReportAccessControl();
 
   /// 构造函数
@@ -37,7 +39,10 @@ class EnhancedAiService {
     required this.storageService,
     required this.modelName,
     required this.prompt,
-  });
+    double? temperature,
+    int? maxTokens,
+  })  : temperature = temperature ?? 0.7,
+        maxTokens = maxTokens ?? 2048;
 
   String _calculateInputHash(
     Assessment assessment,
@@ -160,8 +165,8 @@ class EnhancedAiService {
         tags: _generateTags(assessment, goalSettings),
       );
 
-      // 7. 保存到缓存
-      await storageService.aiReportStorage.saveReport(finalReport);
+      // 7. 保存最终报告并确保同评估仅保留一个报告
+      await storageService.aiReportStorage.saveUniqueReportForAssessment(finalReport);
 
       // 8. 记录操作
       _accessControl.logReportAccess(
@@ -249,8 +254,8 @@ class EnhancedAiService {
   /// 获取API参数
   Map<String, dynamic> _getApiParameters() {
     return {
-      'max_tokens': 2048,
-      'temperature': 0.7,
+      'max_tokens': maxTokens,
+      'temperature': temperature,
     };
   }
 

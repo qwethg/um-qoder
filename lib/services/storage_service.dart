@@ -35,6 +35,8 @@ class StorageService {
     // 初始化AI报告存储服务
     _aiReportStorage = AiReportStorageService();
     await _aiReportStorage.initialize();
+    final ttlDays = _preferencesBox.get('ai_cache_ttl_days', defaultValue: 30) as int;
+    _aiReportStorage.setCacheTtlDays(ttlDays);
   }
 
   // ============ Assessment 相关 ============
@@ -115,6 +117,11 @@ class StorageService {
 
   dynamic get(String key, {dynamic defaultValue}) {
     return _preferencesBox.get(key, defaultValue: defaultValue);
+  }
+
+  Future<void> setCacheTtlDays(int days) async {
+    await _preferencesBox.put('ai_cache_ttl_days', days);
+    _aiReportStorage.setCacheTtlDays(days);
   }
 
   /// 获取首次启动标志
