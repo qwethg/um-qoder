@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +23,7 @@ class HistoryScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('历史记录'),
+            title: Text('历史记录'.tr),
             actions: [
               // 只有在有数据时才显示趋势分析按钮
               if (!isEmpty)
@@ -95,7 +96,7 @@ class _EmptyState extends StatelessWidget {
               onPressed: () => context.go('/assessment'),
               // 性能优化: 添加 const 关键字。
               icon: const Icon(Icons.add),
-              label: const Text('开始评估'),
+              label: Text('开始评估'.tr),
             ),
           ],
         ),

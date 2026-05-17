@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -40,7 +41,7 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('快速评估'),
+        title: Text('快速评估'.tr),
       ),
       // 性能优化: 移除了包裹整体的 Consumer，因为 GoalSettingProvider 的数据是静态的，不需要监听。
       body: SingleChildScrollView(
@@ -106,7 +107,7 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
                   ),
                 )
               // 性能优化: 添加 const 关键字。
-              : const Text('完成评估'),
+              : Text('完成评估'.tr),
         ),
       ),
     );
@@ -121,18 +122,18 @@ class _QuickAssessmentScreenState extends State<QuickAssessmentScreen> {
         context: context,
         builder: (context) => AlertDialog(
           // 性能优化: 添加 const 关键字。
-          title: const Text('提示'),
-          content: const Text('还有未评分的项目，确定要继续吗？'),
+          title: Text('提示'.tr),
+          content: Text('还有未评分的项目，确定要继续吗？'.tr),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               // 性能优化: 添加 const 关键字。
-              child: const Text('取消'),
+              child: Text('取消'.tr),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
               // 性能优化: 添加 const 关键字。
-              child: const Text('继续'),
+              child: Text('继续'.tr),
             ),
           ],
         ),

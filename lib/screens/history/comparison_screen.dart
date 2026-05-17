@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -49,7 +50,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
 
         if (latestAssessment == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('评估对比')),
+            appBar: AppBar(title: Text('评估对比'.tr)),
             body: const Center(child: Text('未找到评估记录')),
           );
         }
@@ -61,7 +62,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('评估对比'),
+            title: Text('评估对比'.tr),
             actions: [
               if (selectedAssessment != null)
                 IconButton(

@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -45,14 +46,14 @@ class _TrendScreenState extends State<TrendScreen> {
 
         if (assessments.isEmpty) {
           return Scaffold(
-            appBar: AppBar(title: const Text('趋势分析')),
+            appBar: AppBar(title: Text('趋势分析'.tr)),
             body: _buildEmptyState(context),
           );
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('趋势分析'),
+            title: Text('趋势分析'.tr),
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),

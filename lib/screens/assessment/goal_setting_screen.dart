@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/constants.dart';
@@ -49,7 +50,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('目标设定'),
+        title: Text('目标设定'.tr),
       ),
       body: SingleChildScrollView(
         // 性能优化: 添加 const 关键字。
@@ -92,15 +93,15 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('确认恢复'),
-        content: const Text('确定要恢复所有设定为默认值吗？'),
+        content: Text('确定要恢复所有设定为默认值吗？'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+            child: Text('取消'.tr),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('确定'),
+            child: Text('确定'.tr),
           ),
         ],
       ),
@@ -446,7 +447,7 @@ class _BottomBar extends StatelessWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: isSaving ? null : onReset,
-                child: const Text('恢复默认'),
+                child: Text('恢复默认'.tr),
               ),
             ),
             // 性能优化: 添加 const 关键字。
@@ -463,7 +464,7 @@ class _BottomBar extends StatelessWidget {
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Text('保存'),
+                    : Text('保存'.tr),
               ),
             ),
           ],

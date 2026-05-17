@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'package:go_router/go_router.dart';
@@ -933,7 +934,7 @@ class _ThemePickerPageState extends State<_ThemePickerPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, _current),
-            child: const Text('确认'),
+            child: Text('确认'.tr),
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +13,7 @@ class AssessmentHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('评估中心'),
+        title: Text('评估中心'.tr),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -137,7 +138,7 @@ class AssessmentHubScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('确定'),
+            child: Text('确定'.tr),
           ),
         ],
       ),

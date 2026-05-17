@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -340,7 +341,7 @@ class _HeaderSection extends StatelessWidget {
                   const SizedBox(width: 8),
                   TextButton(
                     onPressed: onCancel,
-                    child: const Text('取消'),
+                    child: Text('取消'.tr),
                   ),
                 ],
               )
@@ -425,7 +426,7 @@ class _GenerateButton extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: onPressed,
         icon: const Icon(Icons.psychology, size: 18),
-        label: const Text('获取 AI 智能分析'),
+        label: Text('获取 AI 智能分析'.tr),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blue,
           foregroundColor: Colors.white,

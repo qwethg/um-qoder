@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -85,7 +86,7 @@ A: 请检查您是否复制了完整的 API Key，确保没有遗漏任何字符
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('关闭'),
+          child: Text('关闭'.tr),
         ),
         FilledButton.icon(
           onPressed: _launchURL,

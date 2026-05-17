@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -168,7 +169,7 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('开始评估'),
+                  child: Text('开始评估'.tr),
                 ),
               ),
             ],
@@ -488,16 +489,16 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('提示'),
-          content: const Text('还有未评分的项目，确定要继续吗？'),
+          title: Text('提示'.tr),
+          content: Text('还有未评分的项目，确定要继续吗？'.tr),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
+              child: Text('取消'.tr),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('继续'),
+              child: Text('继续'.tr),
             ),
           ],
         ),

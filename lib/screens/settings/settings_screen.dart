@@ -7,6 +7,7 @@ import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 import 'package:ultimate_wheel/providers/settings_provider.dart';
 import 'package:ultimate_wheel/widgets/api_key_tutorial_dialog.dart';
 import 'package:ultimate_wheel/widgets/radar_theme_preview.dart';
+import 'package:ultimate_wheel/models/ai_provider.dart';
 
 /// 设置页 (06)
 // 性能优化: 转换为 StatelessWidget，因为状态由 Provider 和子 StatefulWidget 管理。
@@ -31,8 +32,7 @@ class SettingsScreen extends StatelessWidget {
 
           // AI 设置
           _SectionHeader('AI 设置'),
-          _ApiKeyCard(),
-          _AiModelCard(),
+          _AiProviderSettingsCard(),
           _AiParametersCard(),
           _AiPromptTile(),
           Divider(),
@@ -222,33 +222,60 @@ class _RadarThemePreviewSection extends StatelessWidget {
   }
 }
 
-/// API Key 设置卡片
-class _ApiKeyCard extends StatefulWidget {
-  const _ApiKeyCard();
+/// AI 供应商与模型设置卡片
+class _AiProviderSettingsCard extends StatefulWidget {
+  const _AiProviderSettingsCard();
 
   @override
-  State<_ApiKeyCard> createState() => _ApiKeyCardState();
+  State<_AiProviderSettingsCard> createState() => _AiProviderSettingsCardState();
 }
 
-class _ApiKeyCardState extends State<_ApiKeyCard> {
+class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
   late final TextEditingController _apiKeyController;
+  late final TextEditingController _modelController;
+  late final TextEditingController _baseUrlController;
+  late final TextEditingController _endpointPathController;
 
   @override
   void initState() {
     super.initState();
-    // 性能优化: 在 initState 中使用 context.read() 初始化 Controller。
-    final apiKey = context.read<PreferencesProvider>().apiKey;
-    _apiKeyController = TextEditingController(text: apiKey);
+    final provider = context.read<SettingsProvider>();
+    _apiKeyController = TextEditingController(text: provider.apiKey);
+    _modelController = TextEditingController(text: provider.modelName);
+    _baseUrlController = TextEditingController(text: provider.baseUrl);
+    _endpointPathController = TextEditingController(text: provider.endpointPath);
   }
 
   @override
   void dispose() {
     _apiKeyController.dispose();
+    _modelController.dispose();
+    _baseUrlController.dispose();
+    _endpointPathController.dispose();
     super.dispose();
+  }
+
+  void _syncControllers(SettingsProvider provider) {
+    if (_apiKeyController.text != provider.apiKey) {
+      _apiKeyController.text = provider.apiKey;
+    }
+    if (_modelController.text != provider.modelName) {
+      _modelController.text = provider.modelName;
+    }
+    if (_baseUrlController.text != provider.baseUrl) {
+      _baseUrlController.text = provider.baseUrl;
+    }
+    if (_endpointPathController.text != provider.endpointPath) {
+      _endpointPathController.text = provider.endpointPath;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<SettingsProvider>();
+    // Make sure controllers stay in sync if provider state changes externally
+    _syncControllers(provider);
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
@@ -259,26 +286,50 @@ class _ApiKeyCardState extends State<_ApiKeyCard> {
             Row(
               children: [
                 Icon(
-                  Icons.key_outlined,
+                  Icons.memory_outlined,
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'API Key 设置',
+                  'AI 服务配置',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            
+            // Provider Dropdown
+            DropdownButtonFormField<AiProviderId>(
+              value: provider.providerId,
+              decoration: const InputDecoration(
+                labelText: 'AI 模型服务商',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.cloud_outlined),
+              ),
+              items: aiProviderOptions.map((option) {
+                return DropdownMenuItem(
+                  value: option.id,
+                  child: Text(option.label),
+                );
+              }).toList(),
+              onChanged: (newProvider) {
+                if (newProvider != null) {
+                  provider.setProvider(newProvider);
+                }
+              },
+            ),
+            const SizedBox(height: 8),
             Text(
-              '输入您的 SiliconFlow API Key 以启用 AI 智能分析功能',
+              getProviderOption(provider.providerId).description,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 16),
+
+            // API Key
             TextField(
               controller: _apiKeyController,
               decoration: InputDecoration(
@@ -292,17 +343,46 @@ class _ApiKeyCardState extends State<_ApiKeyCard> {
                 ),
               ),
               obscureText: true,
+              onChanged: (val) => provider.setApiKey(val),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _saveApiKey,
-                icon: const Icon(Icons.save_outlined),
-                label: const Text('保存 API Key'),
+            const SizedBox(height: 16),
+
+            // Model Name
+            TextField(
+              controller: _modelController,
+              decoration: const InputDecoration(
+                labelText: 'AI 模型名称',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.hub_outlined),
               ),
+              onChanged: (val) => provider.setModelName(val),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+
+            // Base URL
+            TextField(
+              controller: _baseUrlController,
+              decoration: const InputDecoration(
+                labelText: 'Base URL',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.link),
+              ),
+              onChanged: (val) => provider.setBaseUrl(val),
+            ),
+            const SizedBox(height: 16),
+
+            // Endpoint Path
+            TextField(
+              controller: _endpointPathController,
+              decoration: const InputDecoration(
+                labelText: 'Endpoint Path',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.route),
+              ),
+              onChanged: (val) => provider.setEndpointPath(val),
+            ),
+            
+            const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -321,31 +401,6 @@ class _ApiKeyCardState extends State<_ApiKeyCard> {
       context: context,
       builder: (context) => const ApiKeyTutorialDialog(),
     );
-  }
-
-  void _saveApiKey() async {
-    // 性能优化: 在事件处理器中使用 context.read()。
-    final provider = context.read<PreferencesProvider>();
-    final key = _apiKeyController.text.trim();
-    if (key.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('API Key 不能为空'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    await provider.updateApiKey(key);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('API Key 已保存'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
   }
 }
 

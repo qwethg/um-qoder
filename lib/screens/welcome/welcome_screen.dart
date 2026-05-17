@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -53,7 +54,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: () => context.go('/home'),
-                child: const Text('跳过'),
+                child: Text('跳过'.tr),
               ),
             ),
             

@@ -1,3 +1,4 @@
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/models/radar_theme.dart';
@@ -13,7 +14,7 @@ class RadarThemeManagerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('雷达图主题'),
+        title: Text('雷达图主题'.tr),
       ),
       body: Consumer<RadarThemeProvider>(
         builder: (context, provider, _) {
@@ -196,7 +197,7 @@ class RadarThemeManagerScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => context.pop(),
-            child: const Text('取消'),
+            child: Text('取消'.tr),
           ),
           FilledButton(
             onPressed: () {
@@ -206,7 +207,7 @@ class RadarThemeManagerScreen extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red,
             ),
-            child: const Text('删除'),
+            child: Text('删除'.tr),
           ),
         ],
       ),
@@ -297,7 +298,7 @@ class _CreateCustomThemeDialogState extends State<_CreateCustomThemeDialog> {
       actions: [
         TextButton(
           onPressed: () => context.pop(),
-          child: const Text('取消'),
+          child: Text('取消'.tr),
         ),
         FilledButton(
           onPressed: _createTheme,
