@@ -1,0 +1,564 @@
+   例如: AiTestRunner.runQuickTest()
+   缓存调用: ${results.cachedCallTime}ms
+   首次调用: ${results.firstCallTime}ms
+  - 10分目标: ${descriptions[10]}
+  - 3分目标: ${descriptions[3]}
+  - 5分目标: ${descriptions[5]}
+  - 7分目标: ${descriptions[7]}
+  - 中位数响应时间: ${response.medianTime.toStringAsFixed(1)}ms
+  - 写入时间: ${storage.writeTime.toStringAsFixed(1)}ms
+  - 吞吐量: ${concurrency.throughput.toStringAsFixed(2)} req/s
+  - 存储效率: ${(storage.storageEfficiency * 100).toStringAsFixed(1)}%
+  - 平均响应时间: ${response.averageTime.toStringAsFixed(1)}ms
+  - 并发请求数: ${concurrency.concurrentRequests}
+  - 性能提升: ${(cache.performanceImprovement * 100).toStringAsFixed(1)}%
+  - 性能提升: ${(cachePerformance.performanceImprovement * 100).toStringAsFixed(1)}%
+  - 性能提升倍数: ${cacheResults.speedImprovement.toStringAsFixed(2)}x
+  - 总报告数: ${storage.totalReports}
+  - 总时间: ${concurrency.totalTime.toStringAsFixed(1)}ms
+  - 成功请求数: ${concurrency.successfulRequests}
+  - 报告保存: ${storageReliability.reportStorage ? "✅" : "❌"}
+  - 报告保存: ${storageResults.reportSaved ? "✅" : "❌"}
+  - 报告检索: ${basicFunctionality.reportRetrieval ? "✅" : "❌"}
+  - 报告检索: ${basicResults.reportRetrieval ? "✅" : "❌"}
+  - 报告生成: ${basicFunctionality.reportGeneration ? "✅" : "❌"}
+  - 报告生成: ${basicResults.reportGeneration ? "✅" : "❌"}
+  - 报告质量: ${basicFunctionality.reportQuality ? "✅" : "❌"}
+  - 报告质量: ${basicResults.reportQuality ? "✅" : "❌"}
+  - 数据完整性: ${storageReliability.dataIntegrity ? "✅" : "❌"}
+  - 数据完整性: ${storageResults.dataIntegrity ? "✅" : "❌"}
+  - 数据持久化: ${storageResults.reportPersisted ? "✅" : "❌"}
+  - 数据隐私: ${access.dataPrivacy ? 
+  - 最大响应时间: ${response.maxTime.toStringAsFixed(1)}ms
+  - 最小响应时间: ${response.minTime.toStringAsFixed(1)}ms
+  - 权限验证: ${access.permissionValidation ? 
+  - 生成时间: ${basicResults.generationTime}ms
+  - 用户访问: ${access.userAccess ? 
+  - 缓存一致性: ${basicFunctionality.cacheConsistency ? "✅" : "❌"}
+  - 缓存一致性: ${basicResults.cacheConsistency ? "✅" : "❌"}
+  - 缓存命中成功: ${cacheResults.cacheHitSuccess ? "✅" : "❌"}
+  - 缓存命中时间: ${cacheResults.cacheHitTime}ms
+  - 缓存命中率: ${(cache.cacheHitRatio * 100).toStringAsFixed(1)}%
+  - 缓存命中率: ${(cachePerformance.cacheHitRatio * 100).toStringAsFixed(1)}%
+  - 缓存调用时间: ${cache.cachedCallTime}ms
+  - 读取时间: ${storage.readTime.toStringAsFixed(1)}ms
+  - 首次生成时间: ${cacheResults.firstGenerationTime}ms
+  - 首次调用时间: ${cache.firstCallTime}ms
+  ⏱️ 平均响应时间: ${report.responseTimeResults.averageTime}ms
+  💾 存储效率: ${report.storageResults.compressionRatio.toStringAsFixed(2)}x
+  📈 缓存命中率: ${(report.cacheResults.hitRate * 100).toStringAsFixed(1)}%
+  🚀 并发处理能力: ${report.concurrencyResults.successfulRequests}/${report.concurrencyResults.totalRequests}
+ (备注: $note)
+ : '快速评估
+# 当前评估数据
+## 各能力项得分
+## 用户个人目标
+## 用户整体感受
+## 📊 总体评价
+##') && !line.contains('总体评价
+#极限飞盘 #UltimateWheel
+${DateFormat('yyyy-MM-dd HH:mm').format(assessment.createdAt)} (${assessment.totalScore.toStringAsFixed(1)}分)
+${_random.nextInt(6) + 1}个月
+${provider.cacheTtlDays}天
+).format(widget.assessment.createdAt)}\n总分：${widget.assessment.totalScore.toStringAsFixed(1)}\n\n#极限飞盘 #UltimateWheel
+**总分**: ${assessment.totalScore.toStringAsFixed(1)}/120
+**评估时间**: ${_formatDateTime(assessment.createdAt)}
+**评估类型**: ${assessment.type == AssessmentType.deep ? 
+1. 运行完整测试套件 (runFullTestSuite)
+10分 - 理想巅峰
+2. 快速功能验证 (runQuickTest)
+3. 性能基准测试 (runPerformanceBenchmark)
+3分 - 基础水平
+4. 存储可靠性测试 (runStorageReliabilityTest)
+5分 - 良好水平
+7分 - 优秀水平
+AI 参数
+AI 参数已恢复默认
+AI 教练分析中...可能需要几分钟，请耐心等待，不要切换到其它页面
+AI 教练提示词
+AI 智能分析
+AI 服务配置
+AI 模型名称
+AI 模型已恢复为默认设置
+AI 模型服务商
+AI 模型设置
+AI 设置
+AI模型信息缺失
+API Key 无效、已过期，或当前账户无权访问该模型。
+API 请求失败: ${streamedResponse.statusCode}\n$errorBody
+DeepSeek 官方接口，deepseek-v4-flash以及deepseek-v4-pro模型。
+Flutter 框架捕获到错误
+Google 官方接口 (使用 OpenAI 兼容层)。
+Markdown格式可能存在问题
+Max Tokens（输出长度上限）
+Moonshot 官方接口，支持kimi-k2.6、kimi-k2.5、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k。
+OpenAI 官方接口。
+Temperature（创造性）
+Ultimate Wheel - 飞盘之轮
+Ultimate Wheel 评估分享
+Web分享调用完成
+Web对比图分享调用完成
+Web暂不支持直接保存图片，请使用分享或浏览器另存
+Web环境，直接分享图片数据
+Web环境，直接分享对比图数据
+\n⚡ 性能测试结果:
+\n✅ 集成测试完成，总耗时: ${report.totalTestTime}ms
+\n🎯 快速测试成功率: ${(successRate * 100).toStringAsFixed(1)}%
+\n🏆 性能等级: $performanceGrade
+\n📊 快速测试结果:
+\n📝 详细测试日志:
+\n🚀 开始AI分析功能模块集成测试...\n
+\n🛡️ 可靠性评分: ${(reliabilityScore * 100).toStringAsFixed(1)}%
+\n🧪 AI分析功能测试菜单
+\n🧹 测试环境清理完成
+⏰ 总测试时间: ${report.totalTestTime}ms
+⏱️ 响应时间:
+⏱️ 总测试时间: ${totalTestTime}ms
+⏱️ 测试2: 响应时间测试
+⚠️ 测试功能只在调试模式下可用
+⚠️ 测试只能在调试模式下运行
+⚠️ 测试环境清理失败: $e
+⚠️ 测试错误处理...
+⚠️ 需要优化 (<2x)
+⚡ 启动AI功能快速验证测试...\n
+⚡ 缓存性能:
+⚡ 缓存性能测试:
+✅ 响应时间测试完成\n
+✅ 存储持久化测试完成
+✅ 存储测试完成\n
+✅ 并发测试完成\n
+✅ 报告生成成功，耗时: ${results.generationTime}ms
+✅ 数据一致性测试完成
+✅ 测试环境初始化成功
+✅ 测试环境清理完成
+✅ 缓存性能测试完成
+✅ 缓存检索成功
+✅ 缓存测试完成\n
+✅ 访问控制测试完成
+✅ 访问控制测试完成\n
+✅ 错误处理测试完成
+❌ 基础功能测试异常: $e
+❌ 失败
+❌ 存储可靠性测试失败: $e
+❌ 存储持久化测试失败
+❌ 存储持久化测试异常: $e
+❌ 快速基础功能测试异常: $e
+❌ 快速存储测试异常: $e
+❌ 快速测试失败: $e
+❌ 快速缓存性能测试异常: $e
+❌ 性能基准测试失败: $e
+❌ 报告生成失败
+❌ 数据一致性测试异常: $e
+❌ 测试环境初始化失败: $e
+❌ 测试环境清理失败: $e
+❌ 测试过程中出现错误: $e
+❌ 测试运行失败: $e
+❌ 缓存性能测试异常: $e
+❌ 缓存检索失败
+❌ 访问控制测试异常: $e
+❌ 错误处理测试异常: $e
+❌ 集成测试失败: $e
+一场成长的仪式
+下降了${(-scoreDifference).toStringAsFixed(1)}分
+与历史对比
+与理想中的自己对话
+专注度、抗压能力、情绪控制、飞盘精神
+中等投掷技能
+中等接盘技能
+临时文件已删除: ${file.path}
+主题「$name」创建成功
+主题名称
+主题模式
+了解基本战术，能执行简单指令
+了解盯防基本原则，能给予一定压力
+什么是飞盘之轮?
+今日报告生成次数已达上限
+从 GlobalKey 捕获截图失败
+从 GlobalKey 捕获截图成功, 大小: ${bytes?.lengthInBytes ?? 0} bytes
+仿佛能预见未来，时机把握完美无瑕
+仿佛飞盘有磁性，任何盘都能稳稳接住
+优秀投掷技能
+优秀接盘技能
+优秀的场上视野，总能出现在该出现的位置
+传盘
+传盘如同艺术，精准度、力度、旋转控制完美
+传盘稳定，掌握2-3种常用传盘方式
+传盘精准且多样化，能应对各种场景
+体力
+体力似乎永不枯竭，可以连续多场高强度作战
+使用指南
+例如 2048
+例如：我的专属配色
+保存
+保存图片到本地
+保存图片失败
+保存失败：$e
+保存成功
+保存目录(可选)
+保持稳定
+全部
+关于
+关于 Ultimate Wheel
+关联的评估ID不能为空
+关闭
+内向型评估
+内向型评估 Introverted Assessment
+准备好开始\n第一次深度评估了吗？
+出色的预判能力，时机把握精准
+分享
+分享图片失败
+分享失败：$e
+分享对比图失败
+分享纯文本失败
+分享评估结果失败
+分数代表满意度，衡量的是\n现状与目标的差距
+分析
+分项评价
+创建
+创建自定义主题
+删除
+删除临时文件失败: ${file.path}
+删除主题
+前往硅基流动
+剩余评估次数
+历史
+历史记录
+取消
+变向、急停、身体控制和协调能力
+变向和急停比较流畅，很少失去平衡
+古雅石庭
+可以完整打完比赛，恢复速度正常
+各式传盘的精准度、力度和旋转控制
+响应时间测试异常: $e
+回到首页
+团队
+团队协作良好，沟通积极
+团队核心成员，善于鼓励和融合团队
+团队灵魂，化学反应完美，让队友变得更好
+图片已保存到临时文件: ${file.path}
+图片已保存到本地: ${file.path}
+在跑动和起跳时表现稳定，速度中等偏上
+在这里，设定你心中各项能力 3/5/7/10 分应该是什么样子。这将成为你评估的基准。
+场上位置感，观察和利用空间的能力
+场上最快的选手之一，跳跃和冲刺能力顶尖
+场上续航、恢复速度、多场次作战能力
+基础投掷技能
+基础接盘技能
+外观
+如何获取免费 API Key
+如何获取免费 API Key？
+如同开了上帝视角，场上空间利用炉火纯青
+如同芭蕾舞者般的身体控制，任何动作都流畅自如
+存储效率测试异常: $e
+存储测试目标
+存储测试评估
+存储测试问题
+完成第一次评估后，这里会显示你的成长轨迹
+完成评估
+定义你心中的10分
+定义你的巅峰：描绘你心中10分的样子
+对场上位置有基本认知，偶尔会站位不佳
+对时机把握不够准确，偶尔会提前或延后
+对比图已保存到临时文件: ${file.path}
+对比图截图成功，图片大小: ${imageBytes.lengthInBytes} bytes
+对盘的飞行、人的跑动时间的预判能力
+尝试删除临时文件但文件不存在: ${file.path}
+已保存到本地: ${file.path}
+已恢复为默认设定
+已清空所有记录
+已达到最大评估次数限制（20次）
+已达到自定义主题上限（最多5个）
+平均分
+平衡与成长 Balance & Growth
+平衡即是圆满
+并发性能测试异常: $e
+建议
+建议包含"$section"章节以提高报告完整性
+开始从 GlobalKey 捕获截图
+开始分享对比图...
+开始分享纯文本: "$text"
+开始分享评估结果...
+开始我的飞盘之轮
+开始评估
+当前有 $assessmentCount 条记录
+当前模型为 SiliconFlow 提供的免费模型。目前仅支持 SiliconFlow 兼容接口。
+当前：$radarStyle
+当前：$themeName
+律动霓虹
+心如止水，任何情况下都保持冷静和专注
+心态
+心态成熟，抗压能力强，飞盘精神良好
+心态较稳定，能保持基本专注
+心灵
+快速更新：用5分钟追踪你的即时状态
+快速测试目标
+快速测试评估
+快速评估
+性能测试评估_${DateTime.now().millisecondsSinceEpoch}
+总体评价
+总分
+总变化
+总结
+恢复失败：$e
+恢复默认
+恢复默认参数
+恢复默认模型
+恭喜，完成了本次评估
+您已达到最大评估次数限制（20次）。如需继续评估，请联系管理员或等待重置。
+意识
+我的Ultimate Wheel成长对比\n最新：$latestDate\n历史：$historicalDate\n总分变化：$changeText\n\n#极限飞盘 #UltimateWheel #成长记录
+我的Ultimate Wheel评估结果\n评估时间：$assessmentDate\n总分：${totalScore.toStringAsFixed(1)}\n\n#极限飞盘 #UltimateWheel
+我的Ultimate Wheel评估结果\n评估时间：${DateFormat(
+我的自定义主题 (${provider.customThemes.length}/${5})
+我还欠缺什么？我与理想的差距在哪里？
+战术大师，能洞察全局并引领团队
+战术理解、场上决策能力
+战术理解深刻，场上决策明智且果断
+截图失败，捕获的图片数据为空
+截图成功，图片大小: ${imageBytes.lengthInBytes} bytes
+技术
+报告ID不能为空
+报告关联的评估ID与实际评估不匹配
+报告内容不能为空
+报告内容过短，可能不够详细
+报告内容过短，可能生成不完整
+报告内容过长，可能影响阅读体验
+报告内容验证失败: ${validationResult.issues.join(
+报告当前不可访问
+报告版本号无效
+报告状态异常：生成时间过长
+报告生成时间早于评估创建时间
+报告生成时间超过30天，建议重新生成
+报告生成时间过长，可能存在性能问题
+报告缺少必要章节: $section
+拥有出色的爆发力，能在关键时刻展现速度优势
+拥有出色的身体控制能力，变向敏捷且精准
+接盘/读盘
+接盘稳定，能读懂大部分飞行轨迹
+接盘能力出色，能完成一些高难度接盘
+推荐默认选项，聚合模型多，国内访问友好。
+提示
+提示词已保存
+提示词已恢复为默认设置
+数据管理
+数据维度
+整体评价：
+无变化
+无权限创建报告
+无法找到 RenderRepaintBoundary
+无法解析流中的数据行: $line
+时机感
+时机感良好，大多数情况能准确预判
+时间范围
+明智
+显示AI教练总体评价
+显示分区得分
+显示总分
+智谱 AI 官方接口，国内顶尖大模型。支持众多模型，且有免费模型（GLM-4.7-Flash），建议自行查阅。
+智谱 GLM
+暂无历史记录可对比
+暂无总体评价
+暂无数据
+暮夜星辰
+暮色霞光
+最低分
+最新
+最新记录
+最高分
+未找到评估记录
+未捕获的 Dart 错误
+未选择目录或平台不支持目录选择
+查看历史
+核心理念：与理想中的自己对话，而非与他人比较。
+桃花春酿
+模型服务暂时不可用，请稍后重试。
+正在生成分享图片...
+比赛中偶尔情绪波动，专注度不稳定
+沉浸式体验：一次与自己对话的完整仪式
+沟通、鼓励、融入体系、化学反应
+浅色模式
+测试问题
+测试问题1
+测试问题2
+深度评估
+深色模式
+清空所有数据
+清空所有评估记录
+满意度驱动
+满意度驱动 Satisfaction-Driven
+满意度，而非排名
+灵敏
+点击下方按钮，获取 AI 教练为您生成的专业分析报告
+点击展开查看详细分析
+烟雨江南
+理解战术体系，能做出合理决策
+生成 AI 分析失败: $e
+生成 AI 分析时发生未知错误
+生成报告时发生未知错误: $e
+生成时间不能为负数
+用 5 分钟快速更新你的能力状态。根据你对当前状态的满意度进行评分。
+用户无基础访问权限
+用户无权为此评估创建报告
+用户无权访问此报告
+目标不是成为满分的“怪物”\n而是成为更圆满、更平衡的自己
+目标设定
+盯防
+盯防技术精湛，站位和时机把握到位
+盯防积极，能有效限制对手部分传盘选择
+直接分享
+硅基流动
+确定
+确定要删除「${theme.name}」吗？此操作不可撤销。
+确定要恢复所有设定为默认值吗？
+确定要清空所有评估记录吗？此操作不可恢复！
+确认
+确认恢复
+碧海青山
+秋柿晚照
+移动端分享调用完成
+移动端对比图分享调用完成
+空间感
+策略${i}_1
+策略${i}_2
+类别
+类别对比
+纯文本分享调用完成
+绝对速度、爆发力、弹跳高度
+统计信息
+继续
+缓存性能测试异常: $e
+缓存有效期（天）
+缓存测试目标
+缓存测试评估
+缓存测试问题
+编辑 AI 教练提示词
+能与队友基本配合，沟通略显不足
+能力项
+能够完成基本的变向动作，身体协调性尚可
+能够跟上场上的节奏，有基本的速度和跳跃能力
+能完成基本传盘，准确率有待提高
+能打完一场比赛，但后程明显体力下降
+能打满全场高强度比赛，第二天依然精力充沛
+能接住大部分常规传盘，偶尔掉盘
+自定义
+自定义 AI 教练的系统指令
+自定义各项能力的分数描述
+良好投掷技能
+良好接盘技能
+花 15-20 分钟，沉浸在这个\n专注而温柔的时刻
+花15-20分钟\n沉浸在这个专注而温柔的时刻
+获取 AI 智能分析
+蒙德里安·晴空
+蒙德里安·绿野
+行动计划
+记录你的思考（可选）
+设置
+访问控制测试异常: $e
+评估
+评估不代表你的全部，只代表此刻的你对自己的认知
+评估中心
+评估对比
+评估次数已用完
+评估结果
+评估设置
+评分代表你对现状的满意度\n衡量的是现状与目标的差距
+评分的基准不是外部的“职业选手”，\n而是自己内心期望达到的最佳状态
+详细分数
+详细变化
+请为以下 ${abilities.length} 项能力进行评分
+请先在设置中配置当前服务商的 API Key
+请描述 $score 分应该是什么样子...
+请求过于频繁，或账户额度不足，请稍后重试。
+请求过于频繁，请稍后再试
+请至少选择一个类别
+请至少选择一个能力项
+请输入 AI 教练的系统提示词...
+请输入主题名称
+请输入您的 API Key
+请选择一条历史记录
+趋势分析
+趋势图
+跑跳
+跟防
+跟防时能跟上对手，偶尔能形成干扰
+跟防稳定，有一定的预判和协防意识
+跟防能力强，经常能完成Block
+跟随系统
+跳过
+身体
+较好的空间感，能找到合理位置
+过程即仪式
+过程即仪式 Process as a Ritual
+近一周
+近一年
+近一月
+近三月
+还有未评分的项目，确定要继续吗？
+还没有自定义主题
+还没有评估记录
+这不是与他人的比较\n而是一次与自己的坦诚对话
+这是一次与自己深度对话的完整仪式
+进步了${scoreDifference.toStringAsFixed(1)}分
+进步最大 💪
+选择$label颜色
+选择主题分享
+选择主题模式
+选择历史记录
+选择对比记录
+选择的时间范围内没有评估记录
+选择目录失败：$e
+选择类别颜色
+选择类别（可多选）
+选择能力项（可多选）
+选择雷达主题
+选择雷达主题：${_selectedTheme.name}
+通过跑位、预判、起跳或飞扑（Layout）来获得防守得分（Block）的能力
+阅读飞行轨迹、稳定接盘、极限接盘的能力
+防守大师，让对手感到窒息般的压迫
+防守如影随形，Block率极高
+阿里云官方接口，调用通义千问大模型，推荐qwen3.6-Plus、qwen3.6-flash。
+阿里云百炼
+限制对手传盘的能力，包括站位、脚步、反应速度和有效的干扰
+雷达图主题
+雷达图对比
+雷达图样式
+需要关注 🤔
+预览图片
+预设主题
+飞盘之轮
+飞盘之轮 - 与理想中的自己对话
+飞盘之轮是一个帮助极限飞盘玩家进行自我评估的工具。
+首页
+马蒂斯·活力
+马蒂斯·深海
+马蒂斯·紫韵
+默认样式
+🎉 性能测试完成！总耗时: ${report.totalTestTime}ms\n
+🎯 AI分析功能模块集成测试报告
+🎯 启动AI分析功能模块完整测试套件...\n
+🎯 性能测试摘要
+🏃‍♂️ 启动AI性能基准测试...\n
+💡 在调试控制台中调用相应方法来运行测试
+💾 启动存储可靠性测试...\n
+💾 存储持久化测试:
+💾 存储效率:
+💾 测试4: 存储效率测试
+💾 测试存储持久化...
+📊 存储可靠性结果:
+📊 整体成功率: ${(overallSuccess * 100).toStringAsFixed(1)}%
+📊 整体成功率: ${(report.overallSuccess * 100).toStringAsFixed(1)}%
+📊 测试1: 缓存性能测试
+📊 缓存性能基准:
+📋 基础功能测试:
+📋 测试基础功能...
+🔄 并发性能:
+🔄 测试3: 并发性能测试
+🔄 测试缓存性能...
+🔍 测试数据一致性...
+🔐 测试访问控制...
+🔒 测试5: 访问控制测试
+🔒 访问控制:
+🚀 开始AI服务性能测试...\n
+🥇 优秀 (10x+)
+🥈 良好 (5x+)
+🥉 及格 (2x+)
