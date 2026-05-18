@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:ultimate_wheel/config/constants.dart';
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/models/radar_theme.dart';
 
@@ -321,7 +322,7 @@ class _RadarChartPainter extends CustomPainter {
       // 绘制文字（不显示图标，只显示文字）
       final textPainter = TextPainter(
         text: TextSpan(
-          text: ability.name,
+          text: ability.name.tr,
           style: textStyle?.copyWith(
             fontSize: 15,          // 字体再大一点 (13 → 15)
             fontWeight: FontWeight.w600,  // 加粗

@@ -66,13 +66,14 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
     final summaryLines = <String>[];
 
     for (final line in lines) {
-      if (line.contains('## 📊 总体评价') || line.contains('总体评价')) {
+      if (line.contains('## 📊 ${'总体评价'.tr}') || line.contains('总体评价'.tr) ||
+          line.contains('## 📊 总体评价') || line.contains('总体评价')) {
         foundOverallSection = true;
         continue;
       }
 
       if (foundOverallSection) {
-        if (line.startsWith('##') && !line.contains('总体评价')) {
+        if (line.startsWith('##') && !line.contains('总体评价'.tr) && !line.contains('总体评价')) {
           // 遇到下一个章节，停止提取
           break;
         }
@@ -106,7 +107,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
 
       // 检查 API Key
       if (prefsProvider.apiKey.isEmpty) {
-        throw Exception('请先在设置中配置 API Key');
+        throw Exception('请先在设置中配置 API Key'.tr);
       }
 
       // 获取用户目标设定
@@ -143,7 +144,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
           finalContent = report.content ?? '';
         } else if (report.status == AiReportStatus.failed) {
           // 失败时，直接抛出包含具体错误信息的异常
-          throw Exception(report.error ?? '生成 AI 分析时发生未知错误');
+          throw Exception(report.error ?? '生成 AI 分析时发生未知错误'.tr);
         }
       });
       await _subscription!.asFuture();
@@ -165,7 +166,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('生成 AI 分析失败: $e'),
+            content: Text('生成 AI 分析失败: $e'.tr),
             backgroundColor: Colors.red,
           ),
         );
@@ -305,7 +306,7 @@ class _HeaderSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'AI 智能分析',
+                    'AI 智能分析'.tr,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,
@@ -314,14 +315,14 @@ class _HeaderSection extends StatelessWidget {
                   const SizedBox(height: 6),
                   if (isGenerating)
                     Text(
-                      'AI 教练分析中...可能需要几分钟，请耐心等待，不要切换到其它页面',
+                      'AI 教练分析中...可能需要几分钟，请耐心等待，不要切换到其它页面'.tr,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: primaryColor,
                       ),
                     )
                   else if (hasAnalysis)
                     Text(
-                      assessment.aiAnalysisSummary ?? '点击展开查看详细分析',
+                      assessment.aiAnalysisSummary ?? '点击展开查看详细分析'.tr,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
@@ -330,7 +331,7 @@ class _HeaderSection extends StatelessWidget {
                     )
                   else
                     Text(
-                      '点击下方按钮，获取 AI 教练为您生成的专业分析报告',
+                      '点击下方按钮，获取 AI 教练为您生成的专业分析报告'.tr,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),

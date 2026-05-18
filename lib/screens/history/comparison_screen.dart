@@ -51,7 +51,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
         if (latestAssessment == null) {
           return Scaffold(
             appBar: AppBar(title: Text('评估对比'.tr)),
-            body: const Center(child: Text('未找到评估记录')),
+            body: Center(child: Text('未找到评估记录'.tr)),
           );
         }
 
@@ -131,7 +131,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                               prefixIcon: Icon(Icons.history),
                             ),
                             initialValue: _selectedAssessmentId,
-                            hint: const Text('请选择一条历史记录'),
+                            hint: Text('请选择一条历史记录'.tr),
                             items: historicalAssessments.map((assessment) {
                               return DropdownMenuItem(
                                 value: assessment.id,
@@ -490,7 +490,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
         SizedBox(
           width: 50,
           child: Text(
-            categoryName,
+            categoryName.tr,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: color,
@@ -594,7 +594,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
               const SizedBox(height: 8),
               ...mostImproved.map((item) => _buildDifferenceItem(
                 context,
-                item.ability.name,
+                item.ability.name.tr,
                 item.difference,
                 PresetRadarThemes.defaultTheme.getCategoryColor(item.ability.category.colorIndex),
               )),
@@ -612,7 +612,7 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
               const SizedBox(height: 8),
               ...topDeclined.map((item) => _buildDifferenceItem(
                 context,
-                item.ability.name,
+                item.ability.name.tr,
                 item.difference,
                 PresetRadarThemes.defaultTheme.getCategoryColor(item.ability.category.colorIndex),
               )),

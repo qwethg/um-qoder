@@ -67,10 +67,10 @@ A: 请检查您是否复制了完整的 API Key，确保没有遗漏任何字符
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('如何获取免费 API Key'),
+      title: Text('如何获取免费 API Key'.tr),
       content: SingleChildScrollView(
         child: MarkdownBody(
-          data: _tutorialContent,
+          data: _tutorialContent.tr,
           onTapLink: (text, href, title) {
             if (href != null) {
               launchUrl(Uri.parse(href));
@@ -91,7 +91,7 @@ A: 请检查您是否复制了完整的 API Key，确保没有遗漏任何字符
         FilledButton.icon(
           onPressed: _launchURL,
           icon: const Icon(Icons.open_in_browser),
-          label: const Text('前往硅基流动'),
+          label: Text('前往硅基流动'.tr),
         ),
       ],
     );

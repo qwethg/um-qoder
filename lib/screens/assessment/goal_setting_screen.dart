@@ -92,7 +92,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认恢复'),
+        title: Text('确认恢复'.tr),
         content: Text('确定要恢复所有设定为默认值吗？'.tr),
         actions: [
           TextButton(
@@ -129,14 +129,14 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已恢复为默认设定')),
+            SnackBar(content: Text('已恢复为默认设定'.tr)),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('恢复失败：$e')),
+          SnackBar(content: Text('恢复失败：$e'.tr)),
         );
       }
     } finally {
@@ -175,7 +175,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('保存成功')),
+            SnackBar(content: Text('保存成功'.tr)),
           );
           Navigator.of(context).pop();
         }
@@ -183,7 +183,7 @@ class _GoalSettingScreenState extends State<GoalSettingScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败：$e')),
+          SnackBar(content: Text('保存失败：$e'.tr)),
         );
       }
     } finally {
@@ -206,13 +206,13 @@ class _Header extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '定义你心中的10分',
+          '定义你心中的10分'.tr,
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         // 性能优化: 添加 const 关键字。
         const SizedBox(height: 8),
         Text(
-          '在这里，设定你心中各项能力 3/5/7/10 分应该是什么样子。这将成为你评估的基准。',
+          '在这里，设定你心中各项能力 3/5/7/10 分应该是什么样子。这将成为你评估的基准。'.tr,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -255,12 +255,12 @@ class _CategorySection extends StatelessWidget {
               // 性能优化: 添加 const 关键字。
               const SizedBox(width: 12),
               Text(
-                category.name,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
+          category.name.tr,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
               ),
+        ),
             ],
           ),
         ),
@@ -306,7 +306,7 @@ class _AbilityItem extends StatelessWidget {
           color: color,
         ),
         title: Text(
-          ability.name,
+          ability.name.tr,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

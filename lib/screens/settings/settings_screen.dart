@@ -11,6 +11,7 @@ import 'package:ultimate_wheel/models/ai_provider.dart';
 import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
 import 'package:ultimate_wheel/services/backup_service.dart';
 import 'package:ultimate_wheel/services/storage_service.dart';
+import 'package:ultimate_wheel/config/l10n.dart';
 
 /// 设置页 (06)
 // 性能优化: 转换为 StatelessWidget，因为状态由 Provider 和子 StatefulWidget 管理。
@@ -21,44 +22,45 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('设置'),
+        title: Text('设置'.tr),
       ),
       body: ListView(
-        children: const [
+        children: [
           // 外观设置
-          _SectionHeader('外观'),
-          _ThemeModeTile(),
-          _RadarStyleTile(),
-          _RadarThemeTile(),
-          Divider(),
+          _SectionHeader('外观'.tr),
+          const _LanguageTile(),
+          const _ThemeModeTile(),
+          const _RadarStyleTile(),
+          const _RadarThemeTile(),
+          const Divider(),
 
           // AI 设置
-          _SectionHeader('AI 设置'),
-          _AiProviderSettingsCard(),
-          _AiParametersCard(),
-          _AiPromptTile(),
-          Divider(),
+          _SectionHeader('AI 设置'.tr),
+          const _AiProviderSettingsCard(),
+          const _AiParametersCard(),
+          const _AiPromptTile(),
+          const Divider(),
 
           // 评估设置
-          _SectionHeader('评估设置'),
-          _GoalSettingTile(),
-          Divider(),
+          _SectionHeader('评估设置'.tr),
+          const _GoalSettingTile(),
+          const Divider(),
 
           // 数据管理
-          _SectionHeader('数据管理'),
-          _BackupRestoreTile(),
-          _ClearDataTile(),
-          Divider(),
+          _SectionHeader('数据管理'.tr),
+          const _BackupRestoreTile(),
+          const _ClearDataTile(),
+          const Divider(),
 
           // 关于
-          _SectionHeader('关于'),
-          _AboutTile(),
-          _GuideTile(),
-          SizedBox(height: 24),
+          _SectionHeader('关于'.tr),
+          const _AboutTile(),
+          const _GuideTile(),
+          const SizedBox(height: 24),
 
           // 版本信息
-          _VersionInfo(),
-          SizedBox(height: 24),
+          const _VersionInfo(),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -73,8 +75,8 @@ class _BackupRestoreTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.backup_outlined),
-      title: const Text('备份与恢复'),
-      subtitle: const Text('导出或导入 JSON 格式的所有数据'),
+      title: Text('备份与恢复'.tr),
+      subtitle: Text('导出或导入 JSON 格式的所有数据'.tr),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _showBackupRestoreDialog(context),
     );
@@ -84,26 +86,26 @@ class _BackupRestoreTile extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('备份与恢复'),
-        content: const Text('您可以将所有数据导出为 JSON 文件进行备份，或者从之前备份的 JSON 文件中恢复数据。'),
+        title: Text('备份与恢复'.tr),
+        content: Text('您可以将所有数据导出为 JSON 文件进行备份，或者从之前备份的 JSON 文件中恢复数据。'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('取消'),
+            child: Text('取消'.tr),
           ),
           FilledButton.tonal(
             onPressed: () async {
               Navigator.pop(dialogContext);
               await _handleImport(context);
             },
-            child: const Text('导入数据'),
+            child: Text('导入数据'.tr),
           ),
           FilledButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
               await _handleExport(context);
             },
-            child: const Text('导出数据'),
+            child: Text('导出数据'.tr),
           ),
         ],
       ),
@@ -139,15 +141,15 @@ class _BackupRestoreTile extends StatelessWidget {
         context.read<GoalSettingProvider>().loadGoalSettings();
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('导入成功，数据已刷新'),
+          SnackBar(
+            content: Text('导入成功，数据已刷新'.tr),
             behavior: SnackBarBehavior.floating,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('导入取消或失败（请检查文件格式是否正确）'),
+          SnackBar(
+            content: Text('导入取消或失败（请检查文件格式是否正确）'.tr),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -180,6 +182,31 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// 语言设置项
+class _LanguageTile extends StatelessWidget {
+  const _LanguageTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final language = context.select((PreferencesProvider p) => p.language);
+
+    return ListTile(
+      leading: const Icon(Icons.language),
+      title: Text('语言 (Language)'.tr),
+      trailing: SegmentedButton<String>(
+        segments: [
+          ButtonSegment(value: 'zh', label: Text('中文'.tr)),
+          ButtonSegment(value: 'en', label: Text('EN'.tr)),
+        ],
+        selected: {language},
+        onSelectionChanged: (Set<String> newSelection) {
+          context.read<PreferencesProvider>().setLanguage(newSelection.first);
+        },
+      ),
+    );
+  }
+}
+
 /// 主题模式设置项
 class _ThemeModeTile extends StatelessWidget {
   const _ThemeModeTile();
@@ -191,7 +218,7 @@ class _ThemeModeTile extends StatelessWidget {
 
     return ListTile(
       leading: const Icon(Icons.palette_outlined),
-      title: const Text('主题模式'),
+      title: Text('主题模式'.tr),
       subtitle: Text(_getThemeModeText(themeMode)),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _showThemeModeDialog(context, context.read<PreferencesProvider>()),
@@ -213,7 +240,7 @@ class _ThemeModeTile extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('选择主题模式'),
+        title: Text('选择主题模式'.tr),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: ThemeMode.values.map((mode) {
@@ -247,8 +274,8 @@ class _RadarStyleTile extends StatelessWidget {
 
     return ListTile(
       leading: const Icon(Icons.radar_outlined),
-      title: const Text('雷达图样式'),
-      subtitle: Text('当前：$radarStyle'),
+      title: Text('雷达图样式'.tr),
+      subtitle: Text('当前：$radarStyle'.tr),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _showRadarStyleDialog(context, context.read<PreferencesProvider>()),
     );
@@ -258,13 +285,13 @@ class _RadarStyleTile extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('雷达图样式'),
+        title: Text('雷达图样式'.tr),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('default'),
-              subtitle: const Text('默认样式'),
+              title: Text('default'.tr),
+              subtitle: Text('默认样式'.tr),
               selected: provider.radarChartStyle == 'default',
               onTap: () {
                 provider.setRadarChartStyle('default');
@@ -289,8 +316,8 @@ class _RadarThemeTile extends StatelessWidget {
 
     return ListTile(
       leading: const Icon(Icons.color_lens_outlined),
-      title: const Text('雷达图主题'),
-      subtitle: Text('当前：$themeName'),
+      title: Text('雷达图主题'.tr),
+      subtitle: Text('当前：$themeName'.tr),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/settings/radar-theme'),
     );
@@ -380,7 +407,7 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'AI 服务配置',
+                  'AI 服务配置'.tr,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -392,15 +419,15 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             // Provider Dropdown
             DropdownButtonFormField<AiProviderId>(
               value: provider.providerId,
-              decoration: const InputDecoration(
-                labelText: 'AI 模型服务商',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.cloud_outlined),
+              decoration: InputDecoration(
+                labelText: 'AI 模型服务商'.tr,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.cloud_outlined),
               ),
               items: aiProviderOptions.map((option) {
                 return DropdownMenuItem(
                   value: option.id,
-                  child: Text(option.label),
+                  child: Text(option.label.tr),
                 );
               }).toList(),
               onChanged: (newProvider) {
@@ -411,7 +438,7 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             ),
             const SizedBox(height: 8),
             Text(
-              getProviderOption(provider.providerId).description,
+              getProviderOption(provider.providerId).description.tr,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -423,7 +450,7 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
               controller: _apiKeyController,
               decoration: InputDecoration(
                 labelText: 'API Key',
-                hintText: '请输入您的 API Key',
+                hintText: '请输入您的 API Key'.tr,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.vpn_key_outlined),
                 suffixIcon: IconButton(
@@ -440,17 +467,17 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             TextField(
               controller: _modelController,
               decoration: InputDecoration(
-                labelText: 'AI 模型名称',
+                labelText: 'AI 模型名称'.tr,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.hub_outlined),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.refresh_outlined),
-                  tooltip: '恢复默认模型',
+                  tooltip: '恢复默认模型'.tr,
                   onPressed: () {
                     provider.restoreDefaultModelName();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('模型名称已恢复默认'),
+                      SnackBar(
+                        content: Text('模型名称已恢复默认'.tr),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -470,13 +497,13 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
                 prefixIcon: const Icon(Icons.link),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.refresh_outlined),
-                  tooltip: '恢复默认URL',
+                  tooltip: '恢复默认 URL'.tr,
                   onPressed: () {
                     provider.restoreDefaultBaseUrl();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Base URL 已恢复默认'),
+                      SnackBar(
                         behavior: SnackBarBehavior.floating,
+                        content: Text('Base URL 已恢复默认'.tr),
                       ),
                     );
                   },
@@ -495,13 +522,13 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
                 prefixIcon: const Icon(Icons.route),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.refresh_outlined),
-                  tooltip: '恢复默认路径',
+                  tooltip: '恢复默认路径'.tr,
                   onPressed: () {
                     provider.restoreDefaultEndpointPath();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Endpoint Path 已恢复默认'),
+                      SnackBar(
                         behavior: SnackBarBehavior.floating,
+                        content: Text('Endpoint Path 已恢复默认'.tr),
                       ),
                     );
                   },
@@ -515,7 +542,7 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => _showTutorialDialog(context),
-                child: const Text('如何获取免费 API Key？'),
+                child: Text('如何获取免费 API Key？'.tr),
               ),
             ),
           ],
@@ -540,8 +567,8 @@ class _AiPromptTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.edit_note_outlined),
-      title: const Text('AI 教练提示词'),
-      subtitle: const Text('自定义 AI 教练的系统指令'),
+      title: Text('AI 教练提示词'.tr),
+      subtitle: Text('自定义 AI 教练的系统指令'.tr),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _showAiPromptDialog(context),
     );
@@ -584,7 +611,7 @@ class _AiPromptDialogState extends State<_AiPromptDialog> {
     final provider = context.read<SettingsProvider>();
 
     return AlertDialog(
-      title: const Text('编辑 AI 教练提示词'),
+      title: Text('编辑 AI 教练提示词'.tr),
       content: TextField(
         controller: _promptController,
         maxLines: 15,
@@ -599,30 +626,30 @@ class _AiPromptDialogState extends State<_AiPromptDialog> {
             provider.restoreDefaultPrompt();
             _promptController.text = provider.prompt;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('提示词已恢复为默认设置'),
+              SnackBar(
+                content: Text('提示词已恢复为默认设置'.tr),
                 behavior: SnackBarBehavior.floating,
               ),
             );
           },
-          child: const Text('恢复默认'),
+          child: Text('恢复默认'.tr),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('取消'),
+          child: Text('取消'.tr),
         ),
         FilledButton(
           onPressed: () {
             provider.setPrompt(_promptController.text);
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('提示词已保存'),
+              SnackBar(
+                content: Text('提示词已保存'.tr),
                 behavior: SnackBarBehavior.floating,
               ),
             );
           },
-          child: const Text('保存'),
+          child: Text('保存'.tr),
         ),
       ],
     );
@@ -680,7 +707,7 @@ class _AiParametersCardState extends State<_AiParametersCard> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'AI 参数',
+                  'AI 参数'.tr,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -689,7 +716,7 @@ class _AiParametersCardState extends State<_AiParametersCard> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Temperature（创造性）',
+              'Temperature（创造性）'.tr,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             Row(
@@ -715,17 +742,17 @@ class _AiParametersCardState extends State<_AiParametersCard> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Max Tokens（输出长度上限）',
+              'Max Tokens（输出长度上限）'.tr,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _maxTokensController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.text_decrease),
-                hintText: '例如 2048',
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.text_decrease),
+                hintText: '例如 2048'.tr,
               ),
               onSubmitted: (v) {
                 final parsed = int.tryParse(v.trim());
@@ -738,7 +765,7 @@ class _AiParametersCardState extends State<_AiParametersCard> {
             ),
             const SizedBox(height: 12),
             Text(
-              '缓存有效期（天）',
+              '缓存有效期（天）'.tr,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
@@ -757,7 +784,7 @@ class _AiParametersCardState extends State<_AiParametersCard> {
                 SizedBox(
                   width: 64,
                   child: Text(
-                    '${provider.cacheTtlDays}天',
+                    '${provider.cacheTtlDays} ${'天'.tr}',
                     textAlign: TextAlign.right,
                   ),
                 ),
@@ -774,14 +801,14 @@ class _AiParametersCardState extends State<_AiParametersCard> {
                       provider.restoreDefaultCacheTtlDays();
                       _maxTokensController.text = provider.maxTokens.toString();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('AI 参数已恢复默认'),
+                        SnackBar(
                           behavior: SnackBarBehavior.floating,
+                          content: Text('AI 参数已恢复默认'.tr),
                         ),
                       );
                     },
                     icon: const Icon(Icons.refresh_outlined),
-                    label: const Text('恢复默认参数'),
+                    label: Text('恢复默认参数'.tr),
                   ),
                 ),
               ],
@@ -828,7 +855,7 @@ class _AiModelCardState extends State<_AiModelCard> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'AI 模型设置',
+                  'AI 模型设置'.tr,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -837,7 +864,7 @@ class _AiModelCardState extends State<_AiModelCard> {
             ),
             const SizedBox(height: 12),
             Text(
-              '当前模型为 SiliconFlow 提供的免费模型。目前仅支持 SiliconFlow 兼容接口。',
+              '当前模型为 SiliconFlow 提供的免费模型。目前仅支持 SiliconFlow 兼容接口。'.tr,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -845,10 +872,10 @@ class _AiModelCardState extends State<_AiModelCard> {
             const SizedBox(height: 16),
             TextField(
               controller: _modelController,
-              decoration: const InputDecoration(
-                labelText: 'AI 模型名称',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.hub_outlined),
+              decoration: InputDecoration(
+                labelText: 'AI 模型名称'.tr,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.hub_outlined),
               ),
               onChanged: (value) => provider.setModelName(value),
             ),
@@ -860,14 +887,14 @@ class _AiModelCardState extends State<_AiModelCard> {
                   provider.restoreDefaultModelName();
                   _modelController.text = provider.modelName;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('AI 模型已恢复为默认设置'),
+                    SnackBar(
+                      content: Text('AI 模型已恢复为默认设置'.tr),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 },
                 icon: const Icon(Icons.refresh_outlined),
-                label: const Text('恢复默认模型'),
+                label: Text('恢复默认模型'.tr),
               ),
             ),
           ],
@@ -885,8 +912,8 @@ class _GoalSettingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.edit_outlined),
-      title: const Text('目标设定'),
-      subtitle: const Text('自定义各项能力的分数描述'),
+      title: Text('目标设定'.tr),
+      subtitle: Text('自定义各项能力的分数描述'.tr),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/assessment/goal-setting'),
     );
@@ -904,8 +931,8 @@ class _ClearDataTile extends StatelessWidget {
 
     return ListTile(
       leading: const Icon(Icons.delete_outline),
-      title: const Text('清空所有评估记录'),
-      subtitle: Text('当前有 $assessmentCount 条记录'),
+      title: Text('清空所有评估记录'.tr),
+      subtitle: Text('${'当前有'.tr} $assessmentCount ${'条记录'.tr}'),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _showClearDataDialog(context),
     );
@@ -915,12 +942,12 @@ class _ClearDataTile extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('清空所有数据'),
-        content: const Text('确定要清空所有评估记录吗？此操作不可恢复！'),
+        title: Text('清空所有数据'.tr),
+        content: Text('确定要清空所有评估记录吗？此操作不可恢复！'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('取消'),
+            child: Text('取消'.tr),
           ),
           FilledButton(
             onPressed: () async {
@@ -929,11 +956,11 @@ class _ClearDataTile extends StatelessWidget {
               if (dialogContext.mounted) {
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('已清空所有记录')),
+                  SnackBar(content: Text('已清空所有记录'.tr)),
                 );
               }
             },
-            child: const Text('确定'),
+            child: Text('确定'.tr),
           ),
         ],
       ),
@@ -949,7 +976,7 @@ class _AboutTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.info_outlined),
-      title: const Text('关于 Ultimate Wheel'),
+      title: Text('关于 Ultimate Wheel'.tr),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _showAboutDialog(context),
     );
@@ -965,11 +992,11 @@ class _AboutTile extends StatelessWidget {
         size: 48,
         color: Theme.of(context).colorScheme.primary,
       ),
-      children: const [
-        SizedBox(height: 16),
-        Text('飞盘之轮是一个帮助极限飞盘玩家进行自我评估的工具。'),
-        SizedBox(height: 16),
-        Text('核心理念：与理想中的自己对话，而非与他人比较。'),
+      children: [
+        const SizedBox(height: 16),
+        Text('飞盘之轮是一个帮助极限飞盘玩家进行自我评估的工具。'.tr),
+        const SizedBox(height: 16),
+        Text('核心理念：与理想中的自己对话，而非与他人比较。'.tr),
       ],
     );
   }
@@ -983,9 +1010,9 @@ class _GuideTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.book_outlined),
-      title: const Text('使用指南'),
+      title: Text('使用指南'.tr),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.push('/welcome'),
+      onTap: () => context.push('/settings/guide'),
     );
   }
 }
@@ -1006,7 +1033,7 @@ class _VersionInfo extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '飞盘之轮 - 与理想中的自己对话',
+          '飞盘之轮 - 与理想中的自己对话'.tr,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

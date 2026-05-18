@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ultimate_wheel/services/storage_service.dart';
+import 'package:ultimate_wheel/config/translations.dart';
 
 /// 应用设置状态管理
 class PreferencesProvider extends ChangeNotifier {
@@ -13,17 +14,20 @@ class PreferencesProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   String _radarChartStyle = 'default';
   String _apiKey = '';
+  String _language = 'zh';
 
   bool get isFirstLaunch => _isFirstLaunch;
   ThemeMode get themeMode => _themeMode;
   String get radarChartStyle => _radarChartStyle;
   String get apiKey => _apiKey;
+  String get language => _language;
 
   void _loadPreferences() {
     _isFirstLaunch = _storageService.isFirstLaunch;
     _themeMode = _parseThemeMode(_storageService.themeMode);
     _radarChartStyle = _storageService.radarChartStyle;
     _apiKey = _storageService.apiKey;
+    _language = _storageService.language;
     notifyListeners();
   }
 
@@ -52,6 +56,14 @@ class PreferencesProvider extends ChangeNotifier {
   Future<void> updateApiKey(String newKey) async {
     await _storageService.setApiKey(newKey);
     _apiKey = newKey;
+    notifyListeners();
+  }
+
+  /// 设置语言
+  Future<void> setLanguage(String lang) async {
+    await _storageService.setLanguage(lang);
+    _language = lang;
+    AppLanguage.currentLanguage = lang;
     notifyListeners();
   }
 

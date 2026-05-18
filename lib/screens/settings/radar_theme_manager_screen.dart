@@ -51,7 +51,7 @@ class RadarThemeManagerScreen extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: () => _showCreateCustomThemeDialog(context),
                   icon: const Icon(Icons.add),
-                  label: const Text('创建自定义主题'),
+                  label: Text('创建自定义主题'.tr),
                 )
               else
                 Text(
@@ -192,8 +192,8 @@ class RadarThemeManagerScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除主题'),
-        content: Text('确定要删除「${theme.name}」吗？此操作不可撤销。'),
+        title: Text('删除主题'.tr),
+        content: Text('确定要删除「${theme.name}」吗？此操作不可撤销。'.tr),
         actions: [
           TextButton(
             onPressed: () => context.pop(),
@@ -239,7 +239,7 @@ class _CreateCustomThemeDialogState extends State<_CreateCustomThemeDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('创建自定义主题'),
+      title: Text('创建自定义主题'.tr),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -302,7 +302,7 @@ class _CreateCustomThemeDialogState extends State<_CreateCustomThemeDialog> {
         ),
         FilledButton(
           onPressed: _createTheme,
-          child: const Text('创建'),
+          child: Text('创建'.tr),
         ),
       ],
     );
@@ -341,7 +341,7 @@ class _CreateCustomThemeDialogState extends State<_CreateCustomThemeDialog> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('选择$label颜色'),
+        title: Text('选择$label颜色'.tr),
         content: Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -374,7 +374,7 @@ class _CreateCustomThemeDialogState extends State<_CreateCustomThemeDialog> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入主题名称')),
+        SnackBar(content: Text('请输入主题名称'.tr)),
       );
       return;
     }
@@ -391,7 +391,7 @@ class _CreateCustomThemeDialogState extends State<_CreateCustomThemeDialog> {
     if (theme != null && mounted) {
       context.pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('主题「$name」创建成功')),
+        SnackBar(content: Text('主题「$name」创建成功'.tr)),
       );
       // 自动应用新创建的主题
       provider.setTheme(theme);

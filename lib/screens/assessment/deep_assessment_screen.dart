@@ -252,7 +252,7 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  category.name,
+                  category.name.tr,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: color,
                     fontWeight: FontWeight.bold,
@@ -354,14 +354,14 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ability.name,
+                        ability.name.tr,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        ability.description,
+                        ability.description.tr,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),

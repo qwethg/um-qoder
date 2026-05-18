@@ -257,7 +257,7 @@ class _AssessmentCard extends StatelessWidget {
                     onPressed: () => context.push('/history/comparison/${assessment.id}'),
                     // 性能优化: 添加 const 关键字。
                     icon: const Icon(Icons.compare_arrows, size: 18),
-                    label: const Text('与历史对比'),
+                    label: Text('与历史对比'.tr),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),

@@ -192,13 +192,13 @@ class _AssessmentHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '快速评估',
+          '快速评估'.tr,
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         // 性能优化: 添加 const 关键字。
         const SizedBox(height: 8),
         Text(
-          '用 5 分钟快速更新你的能力状态。根据你对当前状态的满意度进行评分。',
+          '用 5 分钟快速更新你的能力状态。根据你对当前状态的满意度进行评分。'.tr,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -244,7 +244,7 @@ class _AbilityCategorySection extends StatelessWidget {
               // 性能优化: 添加 const 关键字。
               const SizedBox(width: 12),
               Text(
-                category.name,
+                category.name.tr,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: color,
                       fontWeight: FontWeight.bold,
@@ -315,13 +315,13 @@ class _AbilityItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ability.name,
+                        ability.name.tr,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                       Text(
-                        ability.description,
+                        ability.description.tr,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),

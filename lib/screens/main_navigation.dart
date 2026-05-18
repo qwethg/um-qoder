@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:ultimate_wheel/config/l10n.dart';
+
 /// 主导航框架 - 包含底部导航栏
 class MainNavigation extends StatelessWidget {
   final Widget child;
@@ -55,28 +57,28 @@ class MainNavigation extends StatelessWidget {
                       _NavItem(
                         icon: Icons.home_outlined,
                         selectedIcon: Icons.home_rounded,
-                        label: '首页',
+                        label: '首页'.tr,
                         isSelected: selectedIndex == 0,
                         onTap: () => _onDestinationSelected(context, 0),
                       ),
                       _NavItem(
                         icon: Icons.assessment_outlined,
                         selectedIcon: Icons.assessment_rounded,
-                        label: '评估',
+                        label: '评估'.tr,
                         isSelected: selectedIndex == 1,
                         onTap: () => _onDestinationSelected(context, 1),
                       ),
                       _NavItem(
                         icon: Icons.history_outlined,
                         selectedIcon: Icons.history_rounded,
-                        label: '历史',
+                        label: '历史'.tr,
                         isSelected: selectedIndex == 2,
                         onTap: () => _onDestinationSelected(context, 2),
                       ),
                       _NavItem(
                         icon: Icons.settings_outlined,
                         selectedIcon: Icons.settings_rounded,
-                        label: '设置',
+                        label: '设置'.tr,
                         isSelected: selectedIndex == 3,
                         onTap: () => _onDestinationSelected(context, 3),
                       ),

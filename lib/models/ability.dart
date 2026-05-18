@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ultimate_wheel/config/l10n.dart';
 
 /// 能力项模型
 class Ability {
@@ -34,13 +35,13 @@ extension AbilityCategoryExtension on AbilityCategory {
   String get name {
     switch (this) {
       case AbilityCategory.athleticism:
-        return '身体';
+        return '身体'.tr;
       case AbilityCategory.awareness:
-        return '意识';
+        return '意识'.tr;
       case AbilityCategory.technique:
-        return '技术';
+        return '技术'.tr;
       case AbilityCategory.mind:
-        return '心灵';
+        return '心灵'.tr;
     }
   }
 

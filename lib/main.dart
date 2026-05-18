@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/router.dart';
 import 'package:ultimate_wheel/config/theme.dart';
+import 'package:ultimate_wheel/config/translations.dart';
 import 'package:ultimate_wheel/services/logger_service.dart';
 import 'package:ultimate_wheel/services/storage_service.dart';
 import 'package:ultimate_wheel/providers/assessment_provider.dart';
@@ -27,6 +28,9 @@ void main() {
     // 初始化存储服务
     final storageService = StorageService();
     await storageService.initialize();
+
+    // 初始化全局语言
+    AppLanguage.currentLanguage = storageService.language;
 
     // 初始化雷达图主题Provider
     final radarThemeProvider = RadarThemeProvider();

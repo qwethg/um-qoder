@@ -35,10 +35,10 @@ class AssessmentResultScreen extends StatelessWidget {
       builder: (context, assessment, _) {
         if (assessment == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('评估结果')),
+            appBar: AppBar(title: Text('评估结果'.tr)),
             // 性能优化: 添加 const 关键字。
-            body: const Center(
-              child: Text('未找到评估记录'),
+            body: Center(
+              child: Text('未找到评估记录'.tr),
             ),
           );
         }
@@ -78,7 +78,7 @@ class _ResultContentState extends State<_ResultContent> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('评估结果'),
+        title: Text('评估结果'.tr),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -377,7 +377,7 @@ class _CategoryDetailCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  category.name,
+                  category.name.tr,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -406,17 +406,17 @@ class _CategoryDetailCard extends StatelessWidget {
                 child: Row(
                   children: [
                     SizedBox(
-                      width: 60,
-                      child: Text(
-                        ability.name,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: itemColor,
+                        width: 60,
+                        child: Text(
+                          ability.name.tr,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: itemColor,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
                     // 性能优化: 添加 const 关键字。
                     const SizedBox(width: 6),
                     Expanded(
@@ -540,7 +540,7 @@ class _ActionButtons extends StatelessWidget {
             onPressed: () => context.go('/history'),
             // 性能优化: 添加 const 关键字。
             icon: const Icon(Icons.history),
-            label: const Text('查看历史'),
+            label: Text('查看历史'.tr),
           ),
         ),
         // 性能优化: 添加 const 关键字。
@@ -550,7 +550,7 @@ class _ActionButtons extends StatelessWidget {
             onPressed: () => context.go('/home'),
             // 性能优化: 添加 const 关键字。
             icon: const Icon(Icons.home),
-            label: const Text('回到首页'),
+            label: Text('回到首页'.tr),
           ),
         ),
       ],
@@ -676,7 +676,7 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
                         _updatePreview();
                       }
                     },
-                    child: Text('选择雷达主题：${_selectedTheme.name}'),
+                    child: Text('选择雷达主题：${_selectedTheme.name}'.tr),
                   ),
                 ),
               ],
@@ -724,7 +724,7 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
                         children: [
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('显示AI教练总体评价'),
+                            title: Text('显示AI教练总体评价'.tr),
                             value: _showSummary,
                             onChanged: (v) {
                               setState(() => _showSummary = v);
@@ -733,7 +733,7 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
                           ),
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('显示分区得分'),
+                            title: Text('显示分区得分'.tr),
                             value: _showCategoryScores,
                             onChanged: (v) {
                               setState(() => _showCategoryScores = v);
@@ -742,7 +742,7 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
                           ),
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('显示总分'),
+                            title: Text('显示总分'.tr),
                             value: _showTotalScore,
                             onChanged: (v) {
                               setState(() => _showTotalScore = v);
@@ -798,7 +798,7 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
                               }
                             },
                             icon: const Icon(Icons.save_alt),
-                            label: const Text('保存图片到本地'),
+                            label: Text('保存图片到本地'.tr),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -827,7 +827,7 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
                               }
                             },
                             icon: const Icon(Icons.share),
-                            label: const Text('直接分享'),
+                            label: Text('直接分享'.tr),
                           ),
                         ),
                       ],
@@ -870,14 +870,14 @@ class _ShareThemeSelectorSheetState extends State<_ShareThemeSelectorSheet> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('未选择目录或平台不支持目录选择')),
+            SnackBar(content: Text('未选择目录或平台不支持目录选择'.tr)),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('选择目录失败：$e')),
+          SnackBar(content: Text('选择目录失败：$e'.tr)),
         );
       }
     }
@@ -929,7 +929,7 @@ class _ThemePickerPageState extends State<_ThemePickerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('选择雷达主题'),
+        title: Text('选择雷达主题'.tr),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
         actions: [
           TextButton(

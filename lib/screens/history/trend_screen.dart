@@ -324,7 +324,7 @@ class _TrendScreenState extends State<TrendScreen> {
                 final isSelected = _selectedAbilities.contains(ability);
                 final color = currentTheme.getCategoryColor(ability.category.colorIndex);
                 return FilterChip(
-                  label: Text(ability.name),
+                  label: Text(ability.name.tr),
                   selected: isSelected,
                   onSelected: (selected) {
                     setState(() {
@@ -362,10 +362,10 @@ class _TrendScreenState extends State<TrendScreen> {
 
   Widget _buildLineChart(BuildContext context, List<Assessment> assessments, RadarTheme currentTheme) {
     if (_selectedDimension == DataDimension.ability && _selectedAbilities.isEmpty) {
-      return const Center(child: Text('请至少选择一个能力项'));
+      return Center(child: Text('请至少选择一个能力项'.tr));
     }
     if (_selectedDimension == DataDimension.category && _selectedCategories.isEmpty) {
-      return const Center(child: Text('请至少选择一个类别'));
+      return Center(child: Text('请至少选择一个类别'.tr));
     }
 
     return LineChart(

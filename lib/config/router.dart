@@ -14,6 +14,7 @@ import 'package:ultimate_wheel/screens/history/comparison_screen.dart';
 import 'package:ultimate_wheel/screens/history/trend_screen.dart';
 import 'package:ultimate_wheel/screens/settings/settings_screen.dart';
 import 'package:ultimate_wheel/screens/settings/radar_theme_manager_screen.dart';
+import 'package:ultimate_wheel/screens/settings/guide_screen.dart';
 import 'package:ultimate_wheel/screens/main_navigation.dart';
 
 /// 应用路由配置
@@ -108,6 +109,12 @@ class AppRouter {
                   path: 'radar-theme',
                   name: 'radar-theme',
                   builder: (context, state) => const RadarThemeManagerScreen(),
+                ),
+                // 使用指南
+                GoRoute(
+                  path: 'guide',
+                  name: 'guide',
+                  builder: (context, state) => const GuideScreen(),
                 ),
               ],
             ),

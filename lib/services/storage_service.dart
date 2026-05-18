@@ -131,6 +131,14 @@ class StorageService {
 
   // ============ Preferences 相关 ============
 
+  /// 获取语言设置
+  String get language => _preferencesBox.get('language', defaultValue: 'zh') as String;
+
+  /// 设置语言
+  Future<void> setLanguage(String language) async {
+    await _preferencesBox.put('language', language);
+  }
+
   Future<void> put(String key, dynamic value) async {
     await _preferencesBox.put(key, value);
   }

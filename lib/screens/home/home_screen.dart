@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/constants.dart';
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/models/assessment.dart';
 import 'package:ultimate_wheel/models/radar_theme.dart';
@@ -26,7 +27,7 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          '飞盘之轮',
+          '飞盘之轮'.tr,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.onSurface,
@@ -36,7 +37,7 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () => context.push('/welcome'),
-            tooltip: '什么是飞盘之轮?',
+            tooltip: '什么是飞盘之轮?'.tr,
           ),
         ],
       ),
@@ -130,7 +131,7 @@ class _WithAssessmentsView extends StatelessWidget {
                   Expanded(
                     child: _CategoryDetailCard(
                       assessment: assessment,
-                      categoryName: '身体',
+                      categoryName: '身体'.tr,
                       categoryScore: athleticismScore,
                       colorIndex: 0,
                       abilityIds: athleticismIds,
@@ -142,7 +143,7 @@ class _WithAssessmentsView extends StatelessWidget {
                   Expanded(
                     child: _CategoryDetailCard(
                       assessment: assessment,
-                      categoryName: '技术',
+                      categoryName: '技术'.tr,
                       categoryScore: techniqueScore,
                       colorIndex: 2,
                       abilityIds: techniqueIds,
@@ -161,7 +162,7 @@ class _WithAssessmentsView extends StatelessWidget {
                   Expanded(
                     child: _CategoryDetailCard(
                       assessment: assessment,
-                      categoryName: '意识',
+                      categoryName: '意识'.tr,
                       categoryScore: awarenessScore,
                       colorIndex: 1,
                       abilityIds: awarenessIds,
@@ -173,7 +174,7 @@ class _WithAssessmentsView extends StatelessWidget {
                   Expanded(
                     child: _CategoryDetailCard(
                       assessment: assessment,
-                      categoryName: '心灵',
+                      categoryName: '心灵'.tr,
                       categoryScore: mindScore,
                       colorIndex: 3,
                       abilityIds: mindIds,
@@ -255,7 +256,7 @@ class _EmptyState extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    '准备好开始\n第一次深度评估了吗？',
+                    '准备好开始\n第一次深度评估了吗？'.tr,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                       height: 1.4,
@@ -287,9 +288,9 @@ class _EmptyState extends StatelessWidget {
                 ),
                 onPressed: () => context.go('/assessment'),
                 icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text(
-                  '开始评估',
-                  style: TextStyle(
+                label: Text(
+                  '开始评估'.tr,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
@@ -414,11 +415,11 @@ class _TotalScoreCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
+            Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '整体均衡度',
+                '整体均衡度'.tr,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.6),
                   letterSpacing: 1.2,
@@ -426,7 +427,7 @@ class _TotalScoreCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '总评得分',
+                '总评得分'.tr,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -539,7 +540,7 @@ class _CategoryDetailCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        ability.name,
+                        ability.name.tr,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,

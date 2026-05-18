@@ -13,6 +13,7 @@ import 'package:ultimate_wheel/models/assessment.dart';
 import 'package:ultimate_wheel/models/radar_theme.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/config/constants.dart';
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:ultimate_wheel/config/theme.dart';
 import 'package:ultimate_wheel/widgets/ultimate_wheel_radar_chart.dart';
 
@@ -90,8 +91,8 @@ class ShareService {
     final ringsH = includeCategoryScores ? (12 + 2 * 128 + 12 + 12) : 0.0; // padding + two rows + spacing + border padding
     final summaryText = assessment.aiAnalysisSummary?.trim().isNotEmpty == true
         ? assessment.aiAnalysisSummary!.trim()
-        : '暂无总体评价';
-    final evalTitleH = includeSummary ? _measureTextHeight('整体评价：', tt.titleMedium!.copyWith(fontWeight: FontWeight.w600), contentWidth - 32) : 0.0;
+        : '暂无总体评价'.tr;
+    final evalTitleH = includeSummary ? _measureTextHeight('整体评价：'.tr, tt.titleMedium!.copyWith(fontWeight: FontWeight.w600), contentWidth - 32) : 0.0;
     final evalTextH = includeSummary ? _measureTextHeight(summaryText, tt.bodyMedium!.copyWith(height: 1.6), contentWidth - 32) : 0.0;
     final evalCardH = includeSummary ? (16 + evalTitleH + 8 + evalTextH + 16) : 0.0; // padding + title + spacing + text + padding
     final tagH = _measureTextHeight('#极限飞盘 #UltimateWheel', tt.bodySmall!.copyWith(color: cs.onSurfaceVariant), contentWidth);
@@ -111,7 +112,7 @@ class ShareService {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Ultimate Wheel 评估分享', style: tt.titleLarge!.copyWith(fontWeight: FontWeight.bold)),
+                  Text('Ultimate Wheel 评估分享'.tr, style: tt.titleLarge!.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
                   Text(dateText, style: tt.bodyMedium!.copyWith(color: cs.onSurfaceVariant)),
                   if (includeTotalScore) ...[
@@ -126,7 +127,7 @@ class ShareService {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('总分', style: tt.titleMedium),
+                          Text('总分'.tr, style: tt.titleMedium),
                           const SizedBox(width: 8),
                           Text(totalText, style: tt.headlineMedium!.copyWith(fontWeight: FontWeight.bold)),
                         ],
@@ -177,7 +178,7 @@ class ShareService {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('整体评价：', style: tt.titleMedium!.copyWith(fontWeight: FontWeight.w600)),
+                          Text('整体评价：'.tr, style: tt.titleMedium!.copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
                           Text(
                             summaryText,
@@ -210,7 +211,7 @@ class ShareService {
       if (kIsWeb) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Web暂不支持直接保存图片，请使用分享或浏览器另存')),
+            SnackBar(content: Text('Web暂不支持直接保存图片，请使用分享或浏览器另存'.tr)),
           );
         }
         return null;
@@ -238,7 +239,7 @@ class ShareService {
       logger.info('图片已保存到本地: ${file.path}');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已保存到本地: ${file.path}')),
+          SnackBar(content: Text('${'已保存到本地'.tr}: ${file.path}')),
         );
       }
       return file.path;
@@ -246,7 +247,7 @@ class ShareService {
       logger.error('保存图片失败', e, s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败：$e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${'保存失败'.tr}：$e'), backgroundColor: Colors.red),
         );
       }
       return null;
@@ -290,7 +291,7 @@ class ShareService {
       logger.error('分享图片失败', e, s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('分享失败：$e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${'分享失败'.tr}：$e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -308,19 +309,19 @@ class ShareService {
       // 显示加载提示
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                SizedBox(width: 12),
-                Text('正在生成分享图片...'),
+                const SizedBox(width: 12),
+                Text('正在生成分享图片...'.tr),
               ],
             ),
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -331,11 +332,11 @@ class ShareService {
       );
 
       if (imageBytes == null) {
-        throw Exception('截图失败，捕获的图片数据为空');
+        throw Exception('截图失败，捕获的图片数据为空'.tr);
       }
       logger.debug('截图成功，图片大小: ${imageBytes.lengthInBytes} bytes');
 
-      final String shareText = '我的Ultimate Wheel评估结果\n评估时间：$assessmentDate\n总分：${totalScore.toStringAsFixed(1)}\n\n#极限飞盘 #UltimateWheel';
+      final String shareText = '${'我的Ultimate Wheel评估结果'.tr}\n${'评估时间：'.tr}$assessmentDate\n${'总分：'.tr}${totalScore.toStringAsFixed(1)}\n\n#极限飞盘 #UltimateWheel';
 
       // Web环境处理
       if (kIsWeb) {
@@ -387,7 +388,7 @@ class ShareService {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('分享失败：$e'),
+            content: Text('${'分享失败'.tr}：$e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -408,19 +409,19 @@ class ShareService {
       // 显示加载提示
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                SizedBox(width: 12),
-                Text('正在生成分享图片...'),
+                const SizedBox(width: 12),
+                Text('正在生成分享图片...'.tr),
               ],
             ),
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -431,18 +432,18 @@ class ShareService {
       );
 
       if (imageBytes == null) {
-        throw Exception('截图失败，捕获的图片数据为空');
+        throw Exception('截图失败，捕获的图片数据为空'.tr);
       }
       logger.debug('对比图截图成功，图片大小: ${imageBytes.lengthInBytes} bytes');
 
       // 生成分享文本
       final String changeText = scoreDifference > 0 
-          ? '进步了${scoreDifference.toStringAsFixed(1)}分' 
+          ? '${'进步了'.tr}${scoreDifference.toStringAsFixed(1)}${'分'.tr}' 
           : scoreDifference < 0
-              ? '下降了${(-scoreDifference).toStringAsFixed(1)}分'
-              : '保持稳定';
+              ? '${'下降了'.tr}${(-scoreDifference).toStringAsFixed(1)}${'分'.tr}'
+              : '保持稳定'.tr;
 
-      final String shareText = '我的Ultimate Wheel成长对比\n最新：$latestDate\n历史：$historicalDate\n总分变化：$changeText\n\n#极限飞盘 #UltimateWheel #成长记录';
+      final String shareText = '${'我的Ultimate Wheel成长对比'.tr}\n${'最新：'.tr}$latestDate\n${'历史：'.tr}$historicalDate\n${'总分变化：'.tr}$changeText\n\n#极限飞盘 #UltimateWheel #成长记录';
 
       // Web环境处理
       if (kIsWeb) {
@@ -494,7 +495,7 @@ class ShareService {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('分享失败：$e'),
+            content: Text('${'分享失败'.tr}：$e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -516,7 +517,7 @@ class ShareService {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('分享失败：$e'),
+            content: Text('${'分享失败'.tr}：$e'),
             backgroundColor: Colors.red,
           ),
         );

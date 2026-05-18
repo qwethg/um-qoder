@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:ultimate_wheel/config/constants.dart';
+import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:ultimate_wheel/models/ability.dart';
 import 'package:ultimate_wheel/models/ai_report.dart';
 import 'package:ultimate_wheel/models/assessment.dart';
@@ -88,7 +89,7 @@ class EnhancedAiService {
         id: reportId,
         assessmentId: assessment.id,
         inputHash: inputHash,
-        error: permissionResult.reason ?? '无权限创建报告',
+        error: permissionResult.reason ?? '无权限创建报告'.tr,
       );
       return;
     }
@@ -146,7 +147,7 @@ class EnhancedAiService {
           id: reportId,
           assessmentId: assessment.id,
           inputHash: inputHash,
-          error: '报告内容验证失败: ${validationResult.issues.join(', ')}',
+          error: '${'报告内容验证失败'.tr}: ${validationResult.issues.join(', ')}',
           apiParameters: _getApiParameters(),
         );
         return;
@@ -181,7 +182,7 @@ class EnhancedAiService {
         id: reportId,
         assessmentId: assessment.id,
         inputHash: inputHash,
-        error: '生成报告时发生未知错误: $e\n$s',
+        error: '${'生成报告时发生未知错误'.tr}: $e\n$s',
         apiParameters: _getApiParameters(),
       );
     }
@@ -221,7 +222,7 @@ class EnhancedAiService {
     if (streamedResponse.statusCode != 200) {
       final errorBody = await streamedResponse.stream.bytesToString();
       throw EnhancedAiServiceException(
-        'API 请求失败: ${streamedResponse.statusCode}\n$errorBody',
+        '${'API 请求失败'.tr}: ${streamedResponse.statusCode}\n$errorBody',
       );
     }
 
@@ -244,7 +245,7 @@ class EnhancedAiService {
         } catch (e) {
           // 忽略无法解析的行
           if (kDebugMode) {
-            print('无法解析流中的数据行: $line');
+            print('${'无法解析流中的数据行'.tr}: $line');
           }
         }
       }
@@ -301,7 +302,7 @@ class EnhancedAiService {
     bool inSummarySection = false;
 
     for (final line in lines) {
-      if (line.contains('## 📊 总体评价')) {
+      if (line.contains('## 📊 ${'总体评价'.tr}') || line.contains('## 📊 总体评价')) {
         inSummarySection = true;
         continue;
       }
@@ -323,14 +324,19 @@ class EnhancedAiService {
   void _validateReportContent(String content) {
     // 检查内容长度
     if (content.length < 500) {
-      throw EnhancedAiServiceException('报告内容过短，可能生成不完整');
+      throw EnhancedAiServiceException('报告内容过短，可能生成不完整'.tr);
     }
 
     // 检查必要的章节
-    final requiredSections = ['总体评价', '分项评价', '行动计划'];
-    for (final section in requiredSections) {
+    final requiredSections = ['总体评价'.tr, '分项评价'.tr, '行动计划'.tr];
+    final fallbackSections = ['总体评价', '分项评价', '行动计划'];
+    for (int i = 0; i < requiredSections.length; i++) {
+      final section = requiredSections[i];
       if (!content.contains(section)) {
-        throw EnhancedAiServiceException('报告缺少必要章节: $section');
+        // Fallback for English to Chinese logic if prompt returned Chinese
+        if (!content.contains(fallbackSections[i])) {
+          throw EnhancedAiServiceException('${'报告缺少必要章节'.tr}: $section');
+        }
       }
     }
   }
@@ -355,17 +361,17 @@ class EnhancedAiService {
     final userMessageBuffer = StringBuffer();
 
     // 1. 当前评估数据
-    userMessageBuffer.writeln('# 当前评估数据');
+    userMessageBuffer.writeln('# ${'当前评估数据'.tr}');
     userMessageBuffer
-        .writeln('**评估时间**: ${_formatDateTime(assessment.createdAt)}');
+        .writeln('**${'评估时间'.tr}**: ${_formatDateTime(assessment.createdAt)}');
     userMessageBuffer.writeln(
-        '**评估类型**: ${assessment.type == AssessmentType.deep ? '深度评估' : '快速评估'}');
+        '**${'评估类型'.tr}**: ${assessment.type == AssessmentType.deep ? '深度评估'.tr : '快速评估'.tr}');
     userMessageBuffer
-        .writeln('**总分**: ${assessment.totalScore.toStringAsFixed(1)}/120');
+        .writeln('**${'总分'.tr}**: ${assessment.totalScore.toStringAsFixed(1)}/120');
     userMessageBuffer.writeln();
 
     // 2. 各能力项得分
-    userMessageBuffer.writeln('## 各能力项得分');
+    userMessageBuffer.writeln('## ${'各能力项得分'.tr}');
     for (final category in AbilityCategory.values) {
       final abilities = AbilityConstants.getAbilitiesByCategory(category);
       userMessageBuffer.writeln('### ${_getCategoryName(category)}');
@@ -374,9 +380,9 @@ class EnhancedAiService {
         final score = assessment.scores[ability.id] ?? 0.0;
         final note = assessment.notes[ability.id];
 
-        userMessageBuffer.write('- **${ability.name}**: ${score.toStringAsFixed(1)}/10');
+        userMessageBuffer.write('- **${ability.name.tr}**: ${score.toStringAsFixed(1)}/10');
         if (note != null && note.isNotEmpty) {
-          userMessageBuffer.write(' (备注: $note)');
+          userMessageBuffer.write(' (${'备注'.tr}: $note)');
         }
         userMessageBuffer.writeln();
       }
@@ -385,7 +391,7 @@ class EnhancedAiService {
 
     // 3. 用户目标设定
     if (goalSettings.isNotEmpty) {
-      userMessageBuffer.writeln('## 用户个人目标');
+      userMessageBuffer.writeln('## ${'用户个人目标'.tr}');
       for (final category in AbilityCategory.values) {
         final abilities = AbilityConstants.getAbilitiesByCategory(category);
         bool hasCategoryGoals = false;
@@ -398,19 +404,19 @@ class EnhancedAiService {
               hasCategoryGoals = true;
             }
 
-            userMessageBuffer.writeln('**${ability.name}**:');
+            userMessageBuffer.writeln('**${ability.name.tr}**:');
             final descriptions = goalSetting.scoreDescriptions;
             if (descriptions[3] != null) {
-              userMessageBuffer.writeln('  - 3分目标: ${descriptions[3]}');
+              userMessageBuffer.writeln('  - 3${'分目标'.tr}: ${descriptions[3]}');
             }
             if (descriptions[5] != null) {
-              userMessageBuffer.writeln('  - 5分目标: ${descriptions[5]}');
+              userMessageBuffer.writeln('  - 5${'分目标'.tr}: ${descriptions[5]}');
             }
             if (descriptions[7] != null) {
-              userMessageBuffer.writeln('  - 7分目标: ${descriptions[7]}');
+              userMessageBuffer.writeln('  - 7${'分目标'.tr}: ${descriptions[7]}');
             }
             if (descriptions[10] != null) {
-              userMessageBuffer.writeln('  - 10分目标: ${descriptions[10]}');
+              userMessageBuffer.writeln('  - 10${'分目标'.tr}: ${descriptions[10]}');
             }
           }
         }
@@ -422,7 +428,7 @@ class EnhancedAiService {
 
     // 4. 整体备注（如果有）
     if (assessment.overallNote != null && assessment.overallNote!.isNotEmpty) {
-      userMessageBuffer.writeln('## 用户整体感受');
+      userMessageBuffer.writeln('## ${'用户整体感受'.tr}');
       userMessageBuffer.writeln(assessment.overallNote);
       userMessageBuffer.writeln();
     }
@@ -449,16 +455,7 @@ class EnhancedAiService {
 
   /// 获取类别名称
   String _getCategoryName(AbilityCategory category) {
-    switch (category) {
-      case AbilityCategory.athleticism:
-        return '身体';
-      case AbilityCategory.awareness:
-        return '意识';
-      case AbilityCategory.technique:
-        return '技术';
-      case AbilityCategory.mind:
-        return '心灵';
-    }
+    return category.name.tr;
   }
 }
 
