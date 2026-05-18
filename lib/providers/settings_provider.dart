@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
+import '../models/ai_provider.dart';
 
 class SettingsProvider with ChangeNotifier {
   final StorageService _storageService;
 
+  static const String _providerIdKey = 'ai_provider_id';
+  static const String _apiKeyKey = 'ai_api_key';
+  static const String _baseUrlKey = 'ai_base_url';
+  static const String _endpointPathKey = 'ai_endpoint_path';
+  
   static const String _modelNameKey = 'ai_model_name';
   static const String _promptKey = 'ai_prompt';
   static const String _temperatureKey = 'ai_temperature';
@@ -11,8 +17,8 @@ class SettingsProvider with ChangeNotifier {
   static const String _cacheTtlDaysKey = 'ai_cache_ttl_days';
 
   static const String _defaultModelName = 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B';
-  static const String _defaultPrompt = ''';
-  你是一名顶级的极限飞盘教练、运动生理学家、运动心理学家。你的任务是基于用户提供的自我评估数据，给出专业、鼓励性且可执行的分析和建议。
+  static const String _defaultPrompt = '''
+你是一名顶级的极限飞盘教练、运动生理学家、运动心理学家。你的任务是基于用户提供的自我评估数据，给出专业、鼓励性且可执行的分析和建议。
 
 请按照以下结构输出你的分析（使用 Markdown 格式）：
 
@@ -62,11 +68,21 @@ class SettingsProvider with ChangeNotifier {
   static const int _defaultMaxTokens = 2048;
   static const int _defaultCacheTtlDays = 30;
 
+  AiProviderId _providerId = AiProviderId.siliconflow;
+  String _apiKey = '';
+  String _baseUrl = 'https://api.siliconflow.cn/v1';
+  String _endpointPath = '/chat/completions';
+
   String _modelName = _defaultModelName;
   String _prompt = _defaultPrompt;
   double _temperature = _defaultTemperature;
   int _maxTokens = _defaultMaxTokens;
   int _cacheTtlDays = _defaultCacheTtlDays;
+
+  AiProviderId get providerId => _providerId;
+  String get apiKey => _apiKey;
+  String get baseUrl => _baseUrl;
+  String get endpointPath => _endpointPath;
 
   String get modelName => _modelName;
   String get prompt => _prompt;
@@ -78,8 +94,47 @@ class SettingsProvider with ChangeNotifier {
     _loadSettings();
   }
 
+  String _getProviderKey(String baseKey) => '${baseKey}_${_providerId.name}';
+
+  Future<void> _loadProviderSpecificSettings({bool isInitializing = false}) async {
+    final option = getProviderOption(_providerId);
+    
+    // Check if we have provider-specific keys. If not, try to migrate from old global keys.
+    final providerApiKey = _storageService.get(_getProviderKey(_apiKeyKey));
+    if (providerApiKey == null) {
+      // Only migrate old global data on startup
+      if (isInitializing) {
+        _apiKey = _storageService.get(_apiKeyKey, defaultValue: '') as String;
+        _baseUrl = _storageService.get(_baseUrlKey, defaultValue: option.defaultBaseUrl) as String;
+        _endpointPath = _storageService.get(_endpointPathKey, defaultValue: option.endpointPath) as String;
+        _modelName = _storageService.get(_modelNameKey, defaultValue: option.defaultModel) as String;
+      } else {
+        _apiKey = '';
+        _baseUrl = option.defaultBaseUrl;
+        _endpointPath = option.endpointPath;
+        _modelName = option.defaultModel;
+      }
+      
+      // Save to new keys
+      await _storageService.put(_getProviderKey(_apiKeyKey), _apiKey);
+      await _storageService.put(_getProviderKey(_baseUrlKey), _baseUrl);
+      await _storageService.put(_getProviderKey(_endpointPathKey), _endpointPath);
+      await _storageService.put(_getProviderKey(_modelNameKey), _modelName);
+    } else {
+      // Load provider-specific settings
+      _apiKey = providerApiKey as String;
+      _baseUrl = _storageService.get(_getProviderKey(_baseUrlKey), defaultValue: option.defaultBaseUrl) as String;
+      _endpointPath = _storageService.get(_getProviderKey(_endpointPathKey), defaultValue: option.endpointPath) as String;
+      _modelName = _storageService.get(_getProviderKey(_modelNameKey), defaultValue: option.defaultModel) as String;
+    }
+  }
+
   Future<void> _loadSettings() async {
-    _modelName = await _storageService.get(_modelNameKey, defaultValue: _defaultModelName);
+    final providerIdString = await _storageService.get(_providerIdKey, defaultValue: AiProviderId.siliconflow.name);
+    _providerId = AiProviderId.values.firstWhere((e) => e.name == providerIdString, orElse: () => AiProviderId.siliconflow);
+    
+    await _loadProviderSpecificSettings(isInitializing: true);
+
     _prompt = await _storageService.get(_promptKey, defaultValue: _defaultPrompt);
     _temperature = await _storageService.get(_temperatureKey, defaultValue: _defaultTemperature);
     _maxTokens = await _storageService.get(_maxTokensKey, defaultValue: _defaultMaxTokens);
@@ -87,9 +142,38 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setProvider(AiProviderId newProvider) async {
+    if (_providerId == newProvider) return;
+
+    _providerId = newProvider;
+    await _storageService.put(_providerIdKey, newProvider.name);
+
+    await _loadProviderSpecificSettings(isInitializing: false);
+
+    notifyListeners();
+  }
+
+  Future<void> setApiKey(String newKey) async {
+    _apiKey = newKey;
+    await _storageService.put(_getProviderKey(_apiKeyKey), newKey);
+    notifyListeners();
+  }
+
+  Future<void> setBaseUrl(String newUrl) async {
+    _baseUrl = newUrl;
+    await _storageService.put(_getProviderKey(_baseUrlKey), newUrl);
+    notifyListeners();
+  }
+
+  Future<void> setEndpointPath(String newPath) async {
+    _endpointPath = newPath;
+    await _storageService.put(_getProviderKey(_endpointPathKey), newPath);
+    notifyListeners();
+  }
+
   Future<void> setModelName(String newName) async {
     _modelName = newName;
-    await _storageService.put(_modelNameKey, newName);
+    await _storageService.put(_getProviderKey(_modelNameKey), newName);
     notifyListeners();
   }
 
@@ -118,7 +202,18 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> restoreDefaultModelName() async {
-    await setModelName(_defaultModelName);
+    final option = getProviderOption(_providerId);
+    await setModelName(option.defaultModel);
+  }
+
+  Future<void> restoreDefaultBaseUrl() async {
+    final option = getProviderOption(_providerId);
+    await setBaseUrl(option.defaultBaseUrl);
+  }
+
+  Future<void> restoreDefaultEndpointPath() async {
+    final option = getProviderOption(_providerId);
+    await setEndpointPath(option.endpointPath);
   }
 
   Future<void> restoreDefaultPrompt() async {

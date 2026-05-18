@@ -48,8 +48,28 @@ class StorageService {
 
   /// 获取所有评估记录
   List<Assessment> getAllAssessments() {
-    return _assessmentBox.values.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt)); // 按时间倒序
+    try {
+      final list = <Assessment>[];
+      for (var key in _assessmentBox.keys) {
+        try {
+          final value = _assessmentBox.get(key);
+          if (value is Assessment) {
+            list.add(value);
+          } else {
+            print('Warning: Found non-Assessment value in assessmentBox for key: $key');
+            _assessmentBox.delete(key);
+          }
+        } catch (e) {
+          print('Error reading assessment with key $key: $e');
+          _assessmentBox.delete(key);
+        }
+      }
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt)); // 按时间倒序
+      return list;
+    } catch (e) {
+      print('Critical error in getAllAssessments: $e');
+      return [];
+    }
   }
 
   /// 根据ID获取评估记录

@@ -30,7 +30,18 @@ class RadarThemePreview extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final tileWidth = constraints.maxWidth;
-        final previewSize = ((size ?? tileWidth * 0.8).clamp(100.0, 320.0)).toDouble();
+        double maxPreviewSize = size ?? (tileWidth * 0.8);
+        
+        if (constraints.maxHeight != double.infinity) {
+          // Account for padding (16) and text height (approx 36 if showName)
+          final availableHeight = constraints.maxHeight - 16 - (showName ? 36 : 0);
+          if (maxPreviewSize > availableHeight) {
+            maxPreviewSize = availableHeight;
+          }
+        }
+        
+        final previewSize = maxPreviewSize.clamp(20.0, 320.0).toDouble();
+        
         return InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),

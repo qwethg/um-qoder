@@ -32,59 +32,59 @@ class AiProviderOption {
 const List<AiProviderOption> aiProviderOptions = [
   AiProviderOption(
     id: AiProviderId.siliconflow,
-    label: '硅基流动'.tr,
-    description: '推荐默认选项，聚合模型多，国内访问友好。'.tr,
+    label: '硅基流动',
+    description: '推荐默认选项，聚合模型多，国内访问友好。',
     defaultBaseUrl: 'https://api.siliconflow.cn/v1',
-    defaultModel: 'deepseek-ai/DeepSeek-V4-Flash', 
+    defaultModel: 'deepseek-ai/DeepSeek-V3', 
     endpointPath: '/chat/completions',
   ),
   AiProviderOption(
     id: AiProviderId.deepseek,
     label: 'DeepSeek',
-    description: 'DeepSeek 官方接口，deepseek-v4-flash以及deepseek-v4-pro模型。'.tr,
+    description: 'DeepSeek 官方接口，deepseek-chat 模型。',
     defaultBaseUrl: 'https://api.deepseek.com/v1',
-    defaultModel: 'deepseek-v4-flash', // deepseek-v4-flash以及deepseek-v4-pro
-    endpointPath: '.tr/chat/completions',
+    defaultModel: 'deepseek-chat', 
+    endpointPath: '/chat/completions',
   ),
   AiProviderOption(
     id: AiProviderId.kimi,
     label: 'Kimi',
-    description: 'Moonshot 官方接口，支持kimi-k2.6、kimi-k2.5、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k。'.tr,
+    description: 'Moonshot 官方接口，支持kimi-k2.6、kimi-k2.5、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k。',
     defaultBaseUrl: 'https://api.moonshot.cn/v1',
-    defaultModel: 'moonshot-v1-32k', // Kimi 的通用长文本模型，API 官方名称目前仍以 moonshot-v1 开头
-    endpointPath: '.tr/chat/completions',
+    defaultModel: 'moonshot-v1-32k',
+    endpointPath: '/chat/completions',
   ),
   AiProviderOption(
     id: AiProviderId.glm,
-    label: '智谱 GLM'.tr,
-    description: '智谱 AI 官方接口，国内顶尖大模型。支持众多模型，且有免费模型（GLM-4.7-Flash），建议自行查阅。'.tr,
+    label: '智谱 GLM',
+    description: '智谱 AI 官方接口，国内顶尖大模型。',
     defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    defaultModel: 'GLM-5-Turbo', // 智谱目前的旗舰文本模型
-    endpointPath: '.tr/chat/completions',
+    defaultModel: 'GLM-4', 
+    endpointPath: '/chat/completions',
   ),
   AiProviderOption(
     id: AiProviderId.aliyun,
-    label: '阿里云百炼'.tr,
-    description: '阿里云官方接口，调用通义千问大模型，推荐qwen3.6-Plus、qwen3.6-flash。'.tr,
+    label: '阿里云百炼',
+    description: '阿里云官方接口，调用通义千问大模型，推荐qwen-plus、qwen-turbo。',
     defaultBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    defaultModel: 'qwen3.6-Plus', // 通义千问千亿级别旗舰模型
-    endpointPath: '.tr/chat/completions',
+    defaultModel: 'qwen-plus', 
+    endpointPath: '/chat/completions',
   ),
   AiProviderOption(
     id: AiProviderId.openai,
     label: 'OpenAI',
-    description: 'OpenAI 官方接口。'.tr,
+    description: 'OpenAI 官方接口。',
     defaultBaseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-5.5-instant', // 
+    defaultModel: 'gpt-4o', 
     endpointPath: '/chat/completions',
   ),
   AiProviderOption(
     id: AiProviderId.gemini,
     label: 'Google Gemini',
-    description: 'Google 官方接口 (使用 OpenAI 兼容层)。'.tr,
+    description: 'Google 官方接口 (使用 OpenAI 兼容层)。',
     defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    defaultModel: 'gemini-3.1-pro', // Google Gemini 最新的 Pro 模型
-    endpointPath: '.tr/chat/completions',
+    defaultModel: 'gemini-1.5-pro', 
+    endpointPath: '/chat/completions',
   ),
 ];
 

@@ -1,5 +1,6 @@
 import 'package:ultimate_wheel/config/l10n.dart';
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
@@ -205,41 +206,53 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
     final hasAnalysis = widget.assessment.aiAnalysisContent != null &&
         widget.assessment.aiAnalysisContent!.trim().isNotEmpty;
     
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface.withOpacity(isDark ? 0.6 : 0.7),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.2),
+          width: 0.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: isDark ? Colors.black.withOpacity(0.2) : theme.colorScheme.primary.withOpacity(0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          _HeaderSection(
-            isGenerating: _isGenerating,
-            hasAnalysis: hasAnalysis,
-            isExpanded: _isExpanded,
-            assessment: widget.assessment,
-            onToggleExpanded: _toggleExpanded,
-            onCancel: _cancelGeneration,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Column(
+            children: [
+              _HeaderSection(
+                isGenerating: _isGenerating,
+                hasAnalysis: hasAnalysis,
+                isExpanded: _isExpanded,
+                assessment: widget.assessment,
+                onToggleExpanded: _toggleExpanded,
+                onCancel: _cancelGeneration,
+              ),
+              
+              // 展开的内容区域
+              if (hasAnalysis)
+                _ExpandedContentSection(
+                  expandAnimation: _expandAnimation,
+                  analysisContent: widget.assessment.aiAnalysisContent!,
+                ),
+              
+              // 生成按钮（仅在未生成时显示）
+              if (!hasAnalysis && !_isGenerating)
+                _GenerateButton(onPressed: _generateAiAnalysis),
+            ],
           ),
-          
-          // 展开的内容区域
-          if (hasAnalysis)
-            _ExpandedContentSection(
-              expandAnimation: _expandAnimation,
-              analysisContent: widget.assessment.aiAnalysisContent!,
-            ),
-          
-          // 生成按钮（仅在未生成时显示）
-          if (!hasAnalysis && !_isGenerating)
-            _GenerateButton(onPressed: _generateAiAnalysis),
-        ],
+        ),
       ),
     );
   }
@@ -264,63 +277,62 @@ class _HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
     return InkWell(
       onTap: hasAnalysis && !isGenerating ? onToggleExpanded : null,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
-                Icons.psychology,
-                color: Colors.blue,
-                size: 20,
+              child: Icon(
+                Icons.psychology_rounded,
+                color: primaryColor,
+                size: 24,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'AI 智能分析',
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   if (isGenerating)
-                    const Text(
+                    Text(
                       'AI 教练分析中...可能需要几分钟，请耐心等待，不要切换到其它页面',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: primaryColor,
                       ),
                     )
                   else if (hasAnalysis)
                     Text(
                       assessment.aiAnalysisSummary ?? '点击展开查看详细分析',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     )
                   else
-                    const Text(
+                    Text(
                       '点击下方按钮，获取 AI 教练为您生成的专业分析报告',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                 ],
@@ -330,17 +342,20 @@ class _HeaderSection extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                     ),
                   ),
                   const SizedBox(width: 8),
                   TextButton(
                     onPressed: onCancel,
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.error,
+                    ),
                     child: Text('取消'.tr),
                   ),
                 ],
@@ -349,9 +364,9 @@ class _HeaderSection extends StatelessWidget {
               AnimatedRotation(
                 turns: isExpanded ? 0.5 : 0,
                 duration: const Duration(milliseconds: 300),
-                child: const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.grey,
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
                 ),
               ),
           ],
@@ -372,36 +387,42 @@ class _ExpandedContentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SizeTransition(
       sizeFactor: expandAnimation,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         child: Container(
-          constraints: const BoxConstraints(maxHeight: 300),
+          constraints: const BoxConstraints(maxHeight: 350),
           decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(8),
+            color: theme.colorScheme.surface.withOpacity(isDark ? 0.2 : 0.4),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outline.withOpacity(0.1),
+            ),
           ),
           child: Scrollbar(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
               child: MarkdownBody(
                 data: analysisContent,
                 styleSheet: MarkdownStyleSheet(
-                  p: const TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: Colors.black87,
+                  p: theme.textTheme.bodyMedium?.copyWith(
+                    height: 1.6,
+                    color: theme.colorScheme.onSurface.withOpacity(0.85),
                   ),
-                  h2: const TextStyle(
-                    fontSize: 16,
+                  h2: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: theme.colorScheme.onSurface,
+                    height: 2,
                   ),
-                  h3: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                  h3: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface.withOpacity(0.9),
+                    height: 1.8,
                   ),
                 ),
               ),
@@ -420,19 +441,19 @@ class _GenerateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       width: double.infinity,
-      child: ElevatedButton.icon(
+      child: FilledButton.icon(
         onPressed: onPressed,
-        icon: const Icon(Icons.psychology, size: 18),
+        icon: const Icon(Icons.psychology_rounded, size: 20),
         label: Text('获取 AI 智能分析'.tr),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 12),
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),

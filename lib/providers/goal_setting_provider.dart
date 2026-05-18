@@ -43,9 +43,14 @@ class GoalSettingProvider extends ChangeNotifier {
   }
 
   // 加载目标设定
-  void _loadGoalSettings() {
+  void loadGoalSettings() {
     _goalSettings = _storageService.getAllGoalSettings();
     notifyListeners();
+  }
+
+  // 兼容旧代码的私有方法
+  void _loadGoalSettings() {
+    loadGoalSettings();
   }
 
   /// 保存单个目标设定

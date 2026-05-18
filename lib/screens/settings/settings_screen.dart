@@ -6,8 +6,11 @@ import 'package:ultimate_wheel/providers/preferences_provider.dart';
 import 'package:ultimate_wheel/providers/radar_theme_provider.dart';
 import 'package:ultimate_wheel/providers/settings_provider.dart';
 import 'package:ultimate_wheel/widgets/api_key_tutorial_dialog.dart';
-import 'package:ultimate_wheel/widgets/radar_theme_preview.dart';
 import 'package:ultimate_wheel/models/ai_provider.dart';
+
+import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
+import 'package:ultimate_wheel/services/backup_service.dart';
+import 'package:ultimate_wheel/services/storage_service.dart';
 
 /// 设置页 (06)
 // 性能优化: 转换为 StatelessWidget，因为状态由 Provider 和子 StatefulWidget 管理。
@@ -27,7 +30,6 @@ class SettingsScreen extends StatelessWidget {
           _ThemeModeTile(),
           _RadarStyleTile(),
           _RadarThemeTile(),
-          _RadarThemePreviewSection(),
           Divider(),
 
           // AI 设置
@@ -44,6 +46,7 @@ class SettingsScreen extends StatelessWidget {
 
           // 数据管理
           _SectionHeader('数据管理'),
+          _BackupRestoreTile(),
           _ClearDataTile(),
           Divider(),
 
@@ -61,6 +64,98 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
+
+/// 备份与恢复设置项
+class _BackupRestoreTile extends StatelessWidget {
+  const _BackupRestoreTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.backup_outlined),
+      title: const Text('备份与恢复'),
+      subtitle: const Text('导出或导入 JSON 格式的所有数据'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _showBackupRestoreDialog(context),
+    );
+  }
+
+  void _showBackupRestoreDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('备份与恢复'),
+        content: const Text('您可以将所有数据导出为 JSON 文件进行备份，或者从之前备份的 JSON 文件中恢复数据。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('取消'),
+          ),
+          FilledButton.tonal(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _handleImport(context);
+            },
+            child: const Text('导入数据'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _handleExport(context);
+            },
+            child: const Text('导出数据'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleExport(BuildContext context) async {
+    final storageService = context.read<StorageService>();
+    final backupService = BackupService(storageService);
+    
+    final success = await backupService.exportData();
+    
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '导出成功' : '导出取消或失败'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleImport(BuildContext context) async {
+    final storageService = context.read<StorageService>();
+    final backupService = BackupService(storageService);
+    
+    final success = await backupService.importData();
+    
+    if (context.mounted) {
+      if (success) {
+        // 刷新 Provider 中的数据
+        context.read<AssessmentProvider>().loadAssessments();
+        context.read<GoalSettingProvider>().loadGoalSettings();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('导入成功，数据已刷新'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('导入取消或失败（请检查文件格式是否正确）'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+}
+
 
 // --- 拆分的 Widgets ---
 
@@ -202,26 +297,6 @@ class _RadarThemeTile extends StatelessWidget {
   }
 }
 
-/// 雷达图主题预览区域
-class _RadarThemePreviewSection extends StatelessWidget {
-  const _RadarThemePreviewSection();
-
-  @override
-  Widget build(BuildContext context) {
-    // 性能优化: 使用 Selector 仅监听 currentTheme 的变化。
-    final theme = context.select((RadarThemeProvider p) => p.currentTheme);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: RadarThemePreview(
-        theme: theme,
-        size: 150,
-        showName: false,
-      ),
-    );
-  }
-}
-
 /// AI 供应商与模型设置卡片
 class _AiProviderSettingsCard extends StatefulWidget {
   const _AiProviderSettingsCard();
@@ -257,16 +332,28 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
 
   void _syncControllers(SettingsProvider provider) {
     if (_apiKeyController.text != provider.apiKey) {
-      _apiKeyController.text = provider.apiKey;
+      _apiKeyController.value = _apiKeyController.value.copyWith(
+        text: provider.apiKey,
+        selection: TextSelection.collapsed(offset: provider.apiKey.length),
+      );
     }
     if (_modelController.text != provider.modelName) {
-      _modelController.text = provider.modelName;
+      _modelController.value = _modelController.value.copyWith(
+        text: provider.modelName,
+        selection: TextSelection.collapsed(offset: provider.modelName.length),
+      );
     }
     if (_baseUrlController.text != provider.baseUrl) {
-      _baseUrlController.text = provider.baseUrl;
+      _baseUrlController.value = _baseUrlController.value.copyWith(
+        text: provider.baseUrl,
+        selection: TextSelection.collapsed(offset: provider.baseUrl.length),
+      );
     }
     if (_endpointPathController.text != provider.endpointPath) {
-      _endpointPathController.text = provider.endpointPath;
+      _endpointPathController.value = _endpointPathController.value.copyWith(
+        text: provider.endpointPath,
+        selection: TextSelection.collapsed(offset: provider.endpointPath.length),
+      );
     }
   }
 
@@ -274,7 +361,9 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
   Widget build(BuildContext context) {
     final provider = context.watch<SettingsProvider>();
     // Make sure controllers stay in sync if provider state changes externally
-    _syncControllers(provider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncControllers(provider);
+    });
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -350,10 +439,23 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             // Model Name
             TextField(
               controller: _modelController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'AI 模型名称',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.hub_outlined),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.hub_outlined),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.refresh_outlined),
+                  tooltip: '恢复默认模型',
+                  onPressed: () {
+                    provider.restoreDefaultModelName();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('模型名称已恢复默认'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
               ),
               onChanged: (val) => provider.setModelName(val),
             ),
@@ -362,10 +464,23 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             // Base URL
             TextField(
               controller: _baseUrlController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Base URL',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.link),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.link),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.refresh_outlined),
+                  tooltip: '恢复默认URL',
+                  onPressed: () {
+                    provider.restoreDefaultBaseUrl();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Base URL 已恢复默认'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
               ),
               onChanged: (val) => provider.setBaseUrl(val),
             ),
@@ -374,10 +489,23 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             // Endpoint Path
             TextField(
               controller: _endpointPathController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Endpoint Path',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.route),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.route),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.refresh_outlined),
+                  tooltip: '恢复默认路径',
+                  onPressed: () {
+                    provider.restoreDefaultEndpointPath();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Endpoint Path 已恢复默认'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
               ),
               onChanged: (val) => provider.setEndpointPath(val),
             ),
