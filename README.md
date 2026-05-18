@@ -46,14 +46,17 @@
 - 释放构建（Web）：`flutter build web --release`
 - 清理重构建：`flutter clean && flutter pub get && flutter build web --release`
 
-提示：如使用 GitHub Pages，请在构建时设置基础路径：`flutter build web --release --base-href "/UW-qoder/"`（其中 `UW-qoder` 为仓库名）。
+提示：如使用 GitHub Pages（无自定义域名），请在构建时设置基础路径：`flutter build web --release --base-href "/um-qoder/"`（其中 `um-qoder` 为您的仓库名）。若使用自定义域名，请设置 `--base-href "/"`。
 
 ## 🛠️ 部署说明（统一）
 
 - GitHub Pages（通过 CI 构建发布）
-  - 构建命令：`flutter build web --release --base-href "/UW-qoder/"`
+  - **默认域名构建命令**：`flutter build web --release --base-href "/um-qoder/"`
+  - **自定义域名构建命令**：`flutter build web --release --base-href "/"`（必须配合 Actions 中的 `cname` 属性）
+  - 必须在 Actions 中声明写入权限：`permissions: contents: write`
+  - 建议 Actions 的 Flutter 设置使用 `channel: 'stable'` 替代写死版本，避免 SDK 版本冲突。
   - 发布目录：`build/web`
-  - 访问路径示例：`https://<your-username>.github.io/UW-qoder/`
+  - 访问路径示例：`https://<your-username>.github.io/um-qoder/` 或您的自定义域名
 - Netlify（`netlify.toml` 已配置）
   - 构建命令：`flutter build web --release`
   - 发布目录：`build/web`

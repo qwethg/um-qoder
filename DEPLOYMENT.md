@@ -54,12 +54,20 @@ flutter run -d chrome --release
 ## 📱 方案三：GitHub Pages部署
 
 ### 步骤：
-1. **启用GitHub Pages**：
-   - 进入仓库Settings
-   - 找到Pages选项
-   - Source选择"GitHub Actions"
-2. **推送代码**：GitHub Actions会自动构建和部署
-3. **访问网站**：`https://yourusername.github.io/UW-qoder/`
+1. **启用 GitHub Pages**：
+   - 进入仓库 Settings -> Pages
+   - Source 选择 `Deploy from a branch`
+   - Branch 选择 `gh-pages` 分支的 `/(root)` 目录
+2. **配置 GitHub Actions**：
+   - 在 `.github/workflows/deploy.yml` 中配置自动部署脚本。
+   - **关键避坑配置**：
+     - **权限**：必须显式声明 `permissions: contents: write`，否则无法推送。
+     - **版本**：使用 `channel: 'stable'` 替代固定版本号。
+     - **基准路径**：
+       - 无自定义域名：`flutter build web --release --base-href "/um-qoder/"`（需匹配仓库名）
+       - **有自定义域名**：`flutter build web --release --base-href "/"`，且必须在 `actions-gh-pages` 步骤中增加 `cname: your.custom.domain` 字段。
+3. **推送代码**：将代码推送到 `main` 分支，GitHub Actions 会自动构建并更新网页。
+4. **访问网站**：`https://yourusername.github.io/um-qoder/` 或您的自定义域名。
 
 ---
 
