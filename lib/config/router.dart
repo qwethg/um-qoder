@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:ultimate_wheel/providers/preferences_provider.dart';
 import 'package:ultimate_wheel/screens/welcome/welcome_screen.dart';
 import 'package:ultimate_wheel/screens/home/home_screen.dart';
+import 'package:ultimate_wheel/screens/assessment/assessment_entry_screen.dart';
+import 'package:ultimate_wheel/screens/assessment/deep_assessment_screen.dart';
+import 'package:ultimate_wheel/screens/assessment/unified_assessment_screen.dart';
 import 'package:ultimate_wheel/screens/assessment/assessment_hub_screen.dart';
 import 'package:ultimate_wheel/screens/assessment/goal_setting_screen.dart';
-import 'package:ultimate_wheel/screens/assessment/deep_assessment_screen.dart';
-import 'package:ultimate_wheel/screens/assessment/quick_assessment_screen.dart';
 import 'package:ultimate_wheel/screens/assessment/assessment_result_screen.dart';
+import 'package:ultimate_wheel/screens/assessment/unified_assessment_result_screen.dart';
 import 'package:ultimate_wheel/screens/history/history_screen.dart';
 import 'package:ultimate_wheel/screens/history/comparison_screen.dart';
 import 'package:ultimate_wheel/screens/history/trend_screen.dart';
@@ -19,17 +19,23 @@ import 'package:ultimate_wheel/screens/main_navigation.dart';
 
 /// 应用路由配置
 class AppRouter {
-  static GoRouter createRouter(BuildContext context) {
-    final prefsProvider = Provider.of<PreferencesProvider>(context, listen: false);
-    
+  static GoRouter createRouter(bool isFirstLaunch) {
     return GoRouter(
-      initialLocation: prefsProvider.isFirstLaunch ? '/welcome' : '/home',
+      initialLocation: isFirstLaunch ? '/welcome' : '/home',
       routes: [
         // 欢迎页
         GoRoute(
           path: '/welcome',
           name: 'welcome',
           builder: (context, state) => const WelcomeScreen(),
+          routes: [
+            // 从欢迎页进入的使用指南 (不带底部导航栏)
+            GoRoute(
+              path: 'guide',
+              name: 'welcome-guide',
+              builder: (context, state) => const GuideScreen(fromWelcome: true),
+            ),
+          ],
         ),
 
         // 主导航框架 (包含底部导航栏)
@@ -43,7 +49,7 @@ class AppRouter {
               builder: (context, state) => const HomeScreen(),
             ),
 
-            // 评估中心
+            // 评估 (03)
             GoRoute(
               path: '/assessment',
               name: 'assessment',
@@ -55,17 +61,23 @@ class AppRouter {
                   name: 'goal-setting',
                   builder: (context, state) => const GoalSettingScreen(),
                 ),
-                // 深度评估
+                // 深度评估 (直接入口，用于设置里的发起)
                 GoRoute(
                   path: 'deep',
                   name: 'deep-assessment',
                   builder: (context, state) => const DeepAssessmentScreen(),
                 ),
-                // 快速评估
+                // 统一评估入口 (包装器)
+                GoRoute(
+                  path: 'entry',
+                  name: 'assessment-entry',
+                  builder: (context, state) => const AssessmentEntryScreen(),
+                ),
+                // 统一评估单页 (用于跳过深度评估时跳转)
                 GoRoute(
                   path: 'quick',
                   name: 'quick-assessment',
-                  builder: (context, state) => const QuickAssessmentScreen(),
+                  builder: (context, state) => const UnifiedAssessmentScreen(),
                 ),
               ],
             ),
@@ -114,7 +126,10 @@ class AppRouter {
                 GoRoute(
                   path: 'guide',
                   name: 'guide',
-                  builder: (context, state) => const GuideScreen(),
+                  builder: (context, state) {
+                    final fromWelcome = state.uri.queryParameters['fromWelcome'] == 'true';
+                    return GuideScreen(fromWelcome: fromWelcome);
+                  },
                 ),
               ],
             ),
@@ -128,6 +143,15 @@ class AppRouter {
           builder: (context, state) {
             final assessmentId = state.pathParameters['id']!;
             return AssessmentResultScreen(assessmentId: assessmentId);
+          },
+        ),
+        // 统一评估结果页 (Zen 风格)
+        GoRoute(
+          path: '/assessment/unified-result/:id',
+          name: 'unified-assessment-result',
+          builder: (context, state) {
+            final assessmentId = state.pathParameters['id']!;
+            return UnifiedAssessmentResultScreen(assessmentId: assessmentId);
           },
         ),
       ],
