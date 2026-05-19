@@ -12,6 +12,7 @@ import 'package:ultimate_wheel/providers/assessment_provider.dart';
 import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'unified_assessment_screen.dart';
 
 /// 深度评估页 (03-2)
 class DeepAssessmentScreen extends StatefulWidget {
@@ -73,6 +74,18 @@ class _DeepAssessmentScreenState extends State<DeepAssessmentScreen> {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              context.replace('/assessment/quick');
+            },
+            child: Text(
+              '跳过引导'.tr,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
           // 进度指示
           Center(
             child: Padding(

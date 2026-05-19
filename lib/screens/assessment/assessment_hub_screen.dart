@@ -13,40 +13,43 @@ class AssessmentHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('评估中心'.tr),
+        title: Text('评估'.tr),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              '准备好开始了吗？'.tr,
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '花一点时间，感受自己身体与意识的变化。'.tr,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 32),
+            
             // 目标设定
             _AssessmentCard(
-              icon: Icons.flag,
-              title: '目标设定',
-              description: '定义你的巅峰：描绘你心中10分的样子',
+              icon: Icons.track_changes,
+              title: '目标设定'.tr,
+              description: '定义你心中的10分是什么样子'.tr,
               color: AppTheme.lightPrimary,        // 雾霾蓝
-              onTap: () => context.go('/assessment/goal-setting'),
+              onTap: () => context.push('/assessment/goal-setting'),
             ),
             const SizedBox(height: 16),
             
-            // 深度评估
+            // 统一评估入口
             _AssessmentCard(
-              icon: Icons.self_improvement,
-              title: '深度评估',
-              description: '沉浸式体验：一次与自己对话的完整仪式',
+              icon: Icons.assessment_outlined,
+              title: '开始评估'.tr,
+              description: '与理想的自己对话，记录当下的状态'.tr,
               color: AppTheme.lightSecondary,      // 珊瑚粉
-              onTap: () => context.go('/assessment/deep'),
-            ),
-            const SizedBox(height: 16),
-            
-            // 快速评估
-            _AssessmentCard(
-              icon: Icons.speed,
-              title: '快速评估',
-              description: '快速更新：用5分钟追踪你的即时状态',
-              color: const Color(0xFFE8D4A9),      // 中间色调
-              onTap: () => context.go('/assessment/quick'),
+              onTap: () => context.push('/assessment/entry'),
             ),
           ],
         ),

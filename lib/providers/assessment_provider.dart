@@ -21,6 +21,34 @@ class AssessmentProvider extends ChangeNotifier {
   // 是否有评估记录
   bool get hasAssessments => _assessments.isNotEmpty;
 
+  /// 检查是否需要进行深度评估（距离上次深度评估超过10次记录或超过90天）
+  bool get needsDeepRecalibration {
+    if (_assessments.isEmpty) return false;
+    
+    int assessmentsSinceLastDeep = 0;
+    DateTime? lastDeepDate;
+    
+    for (final assessment in _assessments) {
+      if (assessment.type == AssessmentType.deep) {
+        lastDeepDate = assessment.createdAt;
+        break;
+      }
+      assessmentsSinceLastDeep++;
+    }
+    
+    if (assessmentsSinceLastDeep >= 10) return true;
+    
+    if (lastDeepDate != null) {
+      final daysSince = DateTime.now().difference(lastDeepDate).inDays;
+      if (daysSince >= 90) return true;
+    } else {
+      // 如果从来没有做过深度评估，且已经有了 >= 10 次快速评估
+      if (assessmentsSinceLastDeep >= 10) return true;
+    }
+    
+    return false;
+  }
+
   // 加载评估记录
   void loadAssessments() {
     _assessments = _storageService.getAllAssessments();

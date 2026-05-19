@@ -14,6 +14,8 @@ import 'package:ultimate_wheel/services/storage_service.dart';
 import 'package:ultimate_wheel/config/l10n.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:ultimate_wheel/screens/assessment/deep_assessment_screen.dart' as deep_assessment;
+
 /// 设置页 (06)
 // 性能优化: 转换为 StatelessWidget，因为状态由 Provider 和子 StatefulWidget 管理。
 class SettingsScreen extends StatelessWidget {
@@ -45,6 +47,7 @@ class SettingsScreen extends StatelessWidget {
           // 评估设置
           _SectionHeader('评估设置'.tr),
           const _GoalSettingTile(),
+          const _DeepRecalibrationTile(),
           const Divider(),
 
           // 数据管理
@@ -949,6 +952,28 @@ class _GoalSettingTile extends StatelessWidget {
       subtitle: Text('自定义各项能力的分数描述'.tr),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/assessment/goal-setting'),
+    );
+  }
+}
+
+/// 深度重新校准设置项
+class _DeepRecalibrationTile extends StatelessWidget {
+  const _DeepRecalibrationTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.tune_outlined),
+      title: Text('发起深度重新校准'.tr),
+      subtitle: Text('深度评估(重新校准)'.tr),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const deep_assessment.DeepAssessmentScreen(),
+          ),
+        );
+      },
     );
   }
 }

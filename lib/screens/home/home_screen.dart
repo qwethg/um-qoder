@@ -85,12 +85,13 @@ class _WithAssessmentsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 性能优化: 使用 Selector2 精确监听所需的数据，避免因无关数据变化导致重建。
-    return Selector2<AssessmentProvider, RadarThemeProvider, (Assessment, RadarTheme)>(
+    return Selector2<AssessmentProvider, RadarThemeProvider, (Assessment, RadarTheme, bool)>(
       selector: (_, assessmentProvider, themeProvider) {
-        return (assessmentProvider.latestAssessment!, themeProvider.currentTheme);
+        return (assessmentProvider.latestAssessment!, themeProvider.currentTheme, assessmentProvider.needsDeepRecalibration);
       }, builder: (context, data, _) {
       final assessment = data.$1;
       final currentTheme = data.$2;
+      final needsDeepRecalibration = data.$3;
 
       // 计算各类别得分
       final athleticismIds = AbilityConstants.getAbilitiesByCategory(AbilityCategory.athleticism)
@@ -113,6 +114,10 @@ class _WithAssessmentsView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 重新深度评估提示卡片
+            if (needsDeepRecalibration)
+              const _RecalibrationPromptCard(),
+
             // 最新评估的雷达图
             _RadarChartCard(assessment: assessment, currentTheme: currentTheme),
             // 性能优化: 添加 const 关键字。
@@ -583,3 +588,97 @@ class _CategoryDetailCard extends StatelessWidget {
     return hslColor.withHue(newHue).toColor();
   }
 }
+
+/// 深度重新评估提示卡片
+class _RecalibrationPromptCard extends StatefulWidget {
+  const _RecalibrationPromptCard();
+
+  @override
+  State<_RecalibrationPromptCard> createState() => _RecalibrationPromptCardState();
+}
+
+class _RecalibrationPromptCardState extends State<_RecalibrationPromptCard> {
+  bool _isDismissed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isDismissed) return const SizedBox.shrink();
+    
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withOpacity(isDark ? 0.3 : 0.5),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.3),
+        ),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.auto_awesome,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '你已经记录了很久的日常变化，要不要花 15 分钟，重新进行一次深度的自我对话？'.tr,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    height: 1.5,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => setState(() => _isDismissed = true),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Icon(
+                    Icons.close,
+                    size: 20,
+                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.tonalIcon(
+              onPressed: () {
+                context.push('/assessment/deep');
+              },
+              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+              label: Text('开始深度评估'.tr),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

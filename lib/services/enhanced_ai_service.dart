@@ -190,12 +190,12 @@ class EnhancedAiService {
       );
 
       yield finalReport;
-    } catch (e, s) {
+    } catch (e) {
       yield AiReport.failed(
         id: reportId,
         assessmentId: assessment.id,
         inputHash: inputHash,
-        error: '${'生成报告时发生未知错误'.tr}: $e\n$s',
+        error: '${'生成报告时发生未知错误'.tr}: $e',
         apiParameters: _getApiParameters(),
       );
     }

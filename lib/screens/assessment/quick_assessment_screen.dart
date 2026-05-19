@@ -14,6 +14,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// 快速评估页 (03-3)
+@Deprecated('Quick assessment has been unified into UnifiedAssessmentScreen')
 class QuickAssessmentScreen extends StatefulWidget {
   const QuickAssessmentScreen({super.key});
 

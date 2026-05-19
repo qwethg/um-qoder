@@ -22,6 +22,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       icon: Icons.chat_bubble_outline,
       description: '这不是与他人的比较\n而是一次与自己的坦诚对话',
       subtitle: '内向型评估 Introverted Assessment',
+      showGuideButton: true,
     ),
     WelcomePage(
       title: '满意度，而非排名',
@@ -195,6 +196,7 @@ class WelcomePage extends StatelessWidget {
   final IconData icon;
   final String description;
   final String subtitle;
+  final bool showGuideButton;
 
   const WelcomePage({
     super.key,
@@ -202,6 +204,7 @@ class WelcomePage extends StatelessWidget {
     required this.icon,
     required this.description,
     required this.subtitle,
+    this.showGuideButton = false,
   });
 
   @override
@@ -252,6 +255,23 @@ class WelcomePage extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
+          
+          if (showGuideButton) ...[
+            const SizedBox(height: 32),
+            TextButton.icon(
+              onPressed: () => context.push('/settings/guide?fromWelcome=true'),
+              icon: const Icon(Icons.menu_book_rounded, size: 18),
+              label: const Text('第一次使用可以先阅读这里'),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

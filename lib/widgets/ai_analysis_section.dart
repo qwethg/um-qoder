@@ -37,6 +37,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
     with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   bool _isGenerating = false;
+  bool _isCancelled = false;
   StreamSubscription<AiReport>? _subscription;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
@@ -70,14 +71,18 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
     final summaryLines = <String>[];
 
     for (final line in lines) {
-      if (line.contains('## 📊 ${'总体评价'.tr}') || line.contains('总体评价'.tr) ||
-          line.contains('## 📊 总体评价') || line.contains('总体评价')) {
+      if (line.contains('## 📊 ${'总体评价'.tr}') ||
+          line.contains('总体评价'.tr) ||
+          line.contains('## 📊 总体评价') ||
+          line.contains('总体评价')) {
         foundOverallSection = true;
         continue;
       }
 
       if (foundOverallSection) {
-        if (line.startsWith('##') && !line.contains('总体评价'.tr) && !line.contains('总体评价')) {
+        if (line.startsWith('##') &&
+            !line.contains('总体评价'.tr) &&
+            !line.contains('总体评价')) {
           // 遇到下一个章节，停止提取
           break;
         }
@@ -99,6 +104,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
   Future<void> _generateAiAnalysis() async {
     setState(() {
       _isGenerating = true;
+      _isCancelled = false;
       // 开始生成时自动展开，展示动态过程
       if (!_isExpanded) {
         _isExpanded = true;
@@ -106,145 +112,211 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
       }
     });
 
-    try {
-      // 获取必要的 Provider
-      final prefsProvider = Provider.of<PreferencesProvider>(context, listen: false);
-      final goalProvider = Provider.of<GoalSettingProvider>(context, listen: false);
-      final assessmentProvider = Provider.of<AssessmentProvider>(context, listen: false);
-      final storageService = Provider.of<StorageService>(context, listen: false);
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    int retryCount = 0;
+    const maxRetries = 2; // 最多自动重试2次
 
-      // 检查 API Key
-      if (settingsProvider.effectiveApiKey.isEmpty) {
-        throw Exception('请先在设置中配置 API Key'.tr);
-      }
+    while (retryCount <= maxRetries) {
+      if (_isCancelled) break;
 
-      // 获取用户目标设定
-      final goalSettings = <String, GoalSetting>{};
-      for (final ability in AbilityConstants.abilities) {
-        final setting = goalProvider.getGoalSetting(ability.id);
-        if (setting != null) {
-          goalSettings[ability.id] = setting;
+      try {
+        // 获取必要的 Provider
+        final goalProvider = Provider.of<GoalSettingProvider>(
+          context,
+          listen: false,
+        );
+        final storageService = Provider.of<StorageService>(
+          context,
+          listen: false,
+        );
+        final settingsProvider = Provider.of<SettingsProvider>(
+          context,
+          listen: false,
+        );
+
+        // 检查 API Key
+        if (settingsProvider.effectiveApiKey.isEmpty) {
+          throw Exception('请先在设置中配置 API Key'.tr);
         }
-      }
 
-      final isBuiltIn = settingsProvider.providerId == AiProviderId.glmFree;
-      final aiService = AiService(
-        storageService, 
-        settingsProvider, 
-        apiKey: settingsProvider.effectiveApiKey,
-        isBuiltInKey: isBuiltIn,
-      );
-      final reportStream = aiService.generateReport(
-        assessment: widget.assessment,
-        goalSettings: goalSettings,
-      );
+        // 获取用户目标设定
+        final goalSettings = <String, GoalSetting>{};
+        for (final ability in AbilityConstants.abilities) {
+          final setting = goalProvider.getGoalSetting(ability.id);
+          if (setting != null) {
+            goalSettings[ability.id] = setting;
+          }
+        }
 
-      String finalContent = '';
-      _subscription = reportStream.listen((report) async {
+        final isBuiltIn = settingsProvider.providerId == AiProviderId.glmFree;
+        final aiService = AiService(
+          storageService,
+          settingsProvider,
+          apiKey: settingsProvider.effectiveApiKey,
+          isBuiltInKey: isBuiltIn,
+        );
+        final reportStream = aiService.generateReport(
+          assessment: widget.assessment,
+          goalSettings: goalSettings,
+        );
+
+        String finalContent = '';
+        String? errorMessage;
+        _subscription = reportStream.listen((report) async {
+          if (mounted) {
+            setState(() {
+              // 在流式传输期间更新内容
+              if (report.status == AiReportStatus.generating) {
+                finalContent = report.content ?? '';
+                final updatedAssessment = widget.assessment.copyWith(
+                  aiAnalysisContent: finalContent,
+                );
+                widget.onAssessmentUpdated(updatedAssessment);
+
+                // 自动滚动到底部以展示最新内容
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_scrollController.hasClients) {
+                    final position = _scrollController.position;
+                    // 只有当用户没有向上滚动太多时，才自动滚动到底部
+                    if (position.maxScrollExtent - position.pixels < 150) {
+                      _scrollController.animateTo(
+                        position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 100),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  }
+                });
+              }
+            });
+          }
+
+          if (report.status == AiReportStatus.completed) {
+            finalContent = report.content ?? '';
+          } else if (report.status == AiReportStatus.failed) {
+            // 记录错误信息，在流结束后抛出
+            errorMessage = report.error ?? '生成 AI 分析时发生未知错误'.tr;
+          }
+        });
+        await _subscription!.asFuture();
+
+        // 如果被取消，直接返回不保存
+        if (_isCancelled) return;
+
+        // 如果流结束时记录了错误，则抛出异常，以便外层 catch 块捕获并处理
+        if (errorMessage != null) {
+          throw Exception(errorMessage);
+        }
+
+        // 提取摘要
+        final summary = _extractSummaryFromReport(finalContent);
+
+        // 创建更新后的评估对象
+        final updatedAssessment = widget.assessment.copyWith(
+          aiAnalysisContent: finalContent,
+          aiAnalysisGeneratedAt: DateTime.now(),
+          aiAnalysisSummary: summary,
+        );
+
+        // 通知父组件更新
+        widget.onAssessmentUpdated(updatedAssessment);
+
+        // 成功生成，跳出重试循环
+        break;
+      } catch (e) {
+        if (_isCancelled) break;
+
+        final errorStr = e.toString();
+        final isRateLimit =
+            e is BuiltInKeyLimitException ||
+            errorStr.contains('免费通道暂时拥挤') ||
+            errorStr.contains('429') ||
+            errorStr.contains('访问量过大');
+
+        // 如果是限流错误，并且还没有达到最大重试次数，则等待后重试
+        if (isRateLimit && retryCount < maxRetries) {
+          retryCount++;
+          // 指数退避等待 (1.5s, 3s)
+          await Future.delayed(Duration(milliseconds: 1500 * retryCount));
+          continue; // 继续下一次循环重试
+        }
+
+        // 达到最大重试次数或遇到其他错误
         if (mounted) {
           setState(() {
-            // 在流式传输期间更新内容
-            if (report.status == AiReportStatus.generating) {
-              finalContent = report.content ?? '';
-              final updatedAssessment = widget.assessment.copyWith(
-                aiAnalysisContent: finalContent,
-              );
-              widget.onAssessmentUpdated(updatedAssessment);
-
-              // 自动滚动到底部以展示最新内容
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_scrollController.hasClients) {
-                  final position = _scrollController.position;
-                  // 只有当用户没有向上滚动太多时，才自动滚动到底部
-                  if (position.maxScrollExtent - position.pixels < 150) {
-                    _scrollController.animateTo(
-                      position.maxScrollExtent,
-                      duration: const Duration(milliseconds: 100),
-                      curve: Curves.easeOut,
-                    );
-                  }
-                }
-              });
-            }
+            _isGenerating = false;
           });
-        }
 
-        if (report.status == AiReportStatus.completed) {
-          finalContent = report.content ?? '';
-        } else if (report.status == AiReportStatus.failed) {
-          // 失败时，直接抛出包含具体错误信息的异常
-          throw Exception(report.error ?? '生成 AI 分析时发生未知错误'.tr);
+          final settingsProvider = Provider.of<SettingsProvider>(
+            context,
+            listen: false,
+          );
+          final isBuiltIn = settingsProvider.providerId == AiProviderId.glmFree;
+
+          if (isRateLimit) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('通道暂时拥挤 🥺'.tr),
+                content: Text(
+                  isBuiltIn
+                      ? '当前使用内置免费通道的小伙伴太多啦。\n\n您可以稍后再试，或者在设置中填入您自己的 API Key，获得更稳定、更私密的深度专属报告。'
+                            .tr
+                      : '您使用的 AI 模型当前访问量过大，API 接口返回了 429 限流错误。\n\n我们已经自动为您重试了${retryCount}次，请稍后再试，或者在设置中更换其他模型。'
+                            .tr,
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('稍后再试'.tr),
+                  ),
+                  if (isBuiltIn)
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text('去设置专属Key'.tr),
+                    ),
+                ],
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('生成 AI 分析失败: $e'.tr),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+        break; // 出错并处理完毕，跳出循环
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _isGenerating = false;
+
+        // 如果生成失败或取消，并且当前没有分析内容，重置展开状态，以便下次点击正常显示动画
+        final hasAnalysis =
+            widget.assessment.aiAnalysisContent != null &&
+            widget.assessment.aiAnalysisContent!.trim().isNotEmpty;
+        if (!hasAnalysis && _isExpanded) {
+          _isExpanded = false;
+          _animationController.reset();
         }
       });
-      await _subscription!.asFuture();
-
-      // 提取摘要
-      final summary = _extractSummaryFromReport(finalContent);
-
-      // 创建更新后的评估对象
-      final updatedAssessment = widget.assessment.copyWith(
-        aiAnalysisContent: finalContent,
-        aiAnalysisGeneratedAt: DateTime.now(),
-        aiAnalysisSummary: summary,
-      );
-
-      // 通知父组件更新
-      widget.onAssessmentUpdated(updatedAssessment);
-    } catch (e) {
-      // 显示错误提示
-      if (mounted) {
-        setState(() {
-          _isGenerating = false;
-        });
-
-        if (e is BuiltInKeyLimitException || e.toString().contains('免费通道暂时拥挤')) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text('免费通道暂时拥挤 🥺'.tr),
-              content: Text('当前使用内置通道的小伙伴太多啦，或者该通道暂时不可用。\n\n您可以稍后再试，或者在设置中填入您自己的 API Key，获得更稳定、更私密的深度专属报告。'.tr),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('稍后再试'.tr),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    // 我们这里可以直接引导去设置页
-                    // Navigator.pop(context); // Note: we popped the context above
-                  },
-                  child: Text('去设置专属Key'.tr),
-                ),
-              ],
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('生成 AI 分析失败: $e'.tr),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isGenerating = false;
-        });
-      }
     }
   }
 
-  void _cancelGeneration() async {
-    await _subscription?.cancel();
+  void _cancelGeneration() {
+    _isCancelled = true;
+    _subscription?.cancel(); // 不使用 await，避免被底层的网络请求阻塞
     _subscription = null;
     if (mounted) {
       setState(() {
         _isGenerating = false;
-        final hasAnalysis = widget.assessment.aiAnalysisContent != null &&
+        final hasAnalysis =
+            widget.assessment.aiAnalysisContent != null &&
             widget.assessment.aiAnalysisContent!.trim().isNotEmpty;
         if (!hasAnalysis && _isExpanded) {
           _isExpanded = false;
@@ -268,9 +340,10 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
 
   @override
   Widget build(BuildContext context) {
-    final hasAnalysis = widget.assessment.aiAnalysisContent != null &&
+    final hasAnalysis =
+        widget.assessment.aiAnalysisContent != null &&
         widget.assessment.aiAnalysisContent!.trim().isNotEmpty;
-    
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -284,7 +357,9 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.2) : theme.colorScheme.primary.withOpacity(0.04),
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : theme.colorScheme.primary.withOpacity(0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -304,7 +379,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
                 onToggleExpanded: _toggleExpanded,
                 onCancel: _cancelGeneration,
               ),
-              
+
               // 展开的内容区域
               if (hasAnalysis || _isGenerating)
                 _ExpandedContentSection(
@@ -312,7 +387,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
                   analysisContent: widget.assessment.aiAnalysisContent ?? '',
                   scrollController: _scrollController,
                 ),
-              
+
               // 生成按钮（仅在未生成时显示）
               if (!hasAnalysis && !_isGenerating)
                 _GenerateButton(onPressed: _generateAiAnalysis),

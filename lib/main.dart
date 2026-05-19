@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:ultimate_wheel/config/router.dart';
@@ -45,7 +46,7 @@ void main() {
   });
 }
 
-class UltimateWheelApp extends StatelessWidget {
+class UltimateWheelApp extends StatefulWidget {
   final StorageService storageService;
   final RadarThemeProvider radarThemeProvider;
 
@@ -56,36 +57,49 @@ class UltimateWheelApp extends StatelessWidget {
   });
 
   @override
+  State<UltimateWheelApp> createState() => _UltimateWheelAppState();
+}
+
+class _UltimateWheelAppState extends State<UltimateWheelApp> {
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    // 使用 StorageService 的 isFirstLaunch 初始化路由，避免在 build 中重建
+    _router = AppRouter.createRouter(widget.storageService.isFirstLaunch);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<StorageService>.value(value: storageService),
+        Provider<StorageService>.value(value: widget.storageService),
         ChangeNotifierProvider(
-          create: (_) => PreferencesProvider(storageService),
+          create: (_) => PreferencesProvider(widget.storageService),
         ),
         ChangeNotifierProvider(
-          create: (_) => AssessmentProvider(storageService),
+          create: (_) => AssessmentProvider(widget.storageService),
         ),
         ChangeNotifierProvider(
-          create: (_) => GoalSettingProvider(storageService),
+          create: (_) => GoalSettingProvider(widget.storageService),
         ),
         ChangeNotifierProvider(
-          create: (_) => SettingsProvider(storageService),
+          create: (_) => SettingsProvider(widget.storageService),
         ),
         ChangeNotifierProvider.value(
-          value: radarThemeProvider,
+          value: widget.radarThemeProvider,
         ),
       ],
       child: Consumer<PreferencesProvider>(
         builder: (context, prefs, _) {
-          final router = AppRouter.createRouter(context);
           return MaterialApp.router(
             title: 'Ultimate Wheel - 飞盘之轮',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: prefs.themeMode,
-            routerConfig: router,
+            routerConfig: _router,
           );
         },
       ),
