@@ -35,8 +35,14 @@ if (!window._flutter) {
 }
 _flutter.buildConfig = {"engineRevision":"4c525dac5ebe5971c5708ef73558ed8edcf4a362","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}]};
 
+
 _flutter.loader.load({
+  config: {
+    // 使用阿里 npmmirror 提供的 canvaskit-wasm CDN
+    // 版本号 0.39.1 对应 Flutter 3.24
+    canvasKitBaseUrl: "https://registry.npmmirror.com/canvaskit-wasm/0.39.1/files/bin/"
+  },
   serviceWorkerSettings: {
-    serviceWorkerVersion: "33395015" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */
+    serviceWorkerVersion: "141298012" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */
   }
 });
