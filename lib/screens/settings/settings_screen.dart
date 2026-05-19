@@ -12,6 +12,7 @@ import 'package:ultimate_wheel/providers/goal_setting_provider.dart';
 import 'package:ultimate_wheel/services/backup_service.dart';
 import 'package:ultimate_wheel/services/storage_service.dart';
 import 'package:ultimate_wheel/config/l10n.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// 设置页 (06)
 // 性能优化: 转换为 StatelessWidget，因为状态由 Provider 和子 StatefulWidget 管理。
@@ -446,31 +447,55 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             const SizedBox(height: 16),
 
             // API Key
-            TextField(
-              controller: _apiKeyController,
-              decoration: InputDecoration(
-                labelText: 'API Key',
-                hintText: '请输入您的 API Key'.tr,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.vpn_key_outlined),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () => _apiKeyController.clear(),
+            if (provider.providerId == AiProviderId.glmFree)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
                 ),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '已开启内置免费通道，无需填写 API Key'.tr,
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              TextField(
+                controller: _apiKeyController,
+                decoration: InputDecoration(
+                  labelText: 'API Key',
+                  hintText: '请输入您的 API Key'.tr,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.vpn_key_outlined),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () => _apiKeyController.clear(),
+                  ),
+                ),
+                obscureText: true,
+                onChanged: (val) => provider.setApiKey(val),
               ),
-              obscureText: true,
-              onChanged: (val) => provider.setApiKey(val),
-            ),
             const SizedBox(height: 16),
 
             // Model Name
             TextField(
               controller: _modelController,
+              readOnly: provider.providerId == AiProviderId.glmFree,
               decoration: InputDecoration(
                 labelText: 'AI 模型名称'.tr,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.hub_outlined),
-                suffixIcon: IconButton(
+                suffixIcon: provider.providerId == AiProviderId.glmFree ? null : IconButton(
                   icon: const Icon(Icons.refresh_outlined),
                   tooltip: '恢复默认模型'.tr,
                   onPressed: () {
@@ -491,11 +516,12 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             // Base URL
             TextField(
               controller: _baseUrlController,
+              readOnly: provider.providerId == AiProviderId.glmFree,
               decoration: InputDecoration(
                 labelText: 'Base URL',
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.link),
-                suffixIcon: IconButton(
+                suffixIcon: provider.providerId == AiProviderId.glmFree ? null : IconButton(
                   icon: const Icon(Icons.refresh_outlined),
                   tooltip: '恢复默认 URL'.tr,
                   onPressed: () {
@@ -516,11 +542,12 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             // Endpoint Path
             TextField(
               controller: _endpointPathController,
+              readOnly: provider.providerId == AiProviderId.glmFree,
               decoration: InputDecoration(
                 labelText: 'Endpoint Path',
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.route),
-                suffixIcon: IconButton(
+                suffixIcon: provider.providerId == AiProviderId.glmFree ? null : IconButton(
                   icon: const Icon(Icons.refresh_outlined),
                   tooltip: '恢复默认路径'.tr,
                   onPressed: () {
@@ -540,9 +567,15 @@ class _AiProviderSettingsCardState extends State<_AiProviderSettingsCard> {
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => _showTutorialDialog(context),
-                child: Text('如何获取免费 API Key？'.tr),
+              child: TextButton.icon(
+                icon: const Icon(Icons.card_giftcard, size: 16),
+                onPressed: () async {
+                  final url = Uri.parse('https://www.bigmodel.cn/invite?icode=AaUj%2FKaiWIwER%2BIPYkTRAlwpqjqOwPB5EXW6OL4DgqY%3D');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
+                label: Text('免费申请专属大模型 API Key'.tr),
               ),
             ),
           ],

@@ -17,6 +17,13 @@ import 'package:ultimate_wheel/services/storage_service.dart';
 import 'package:ultimate_wheel/utils/opt.dart';
 import 'package:uuid/uuid.dart';
 
+class BuiltInKeyLimitException implements Exception {
+  final String message;
+  BuiltInKeyLimitException(this.message);
+  @override
+  String toString() => message;
+}
+
 /// AI 分析服务 - 增强版
 ///
 /// 特性:
@@ -27,21 +34,27 @@ import 'package:uuid/uuid.dart';
 /// - 报告内容校验与修复
 class EnhancedAiService {
   final String apiKey;
+  final String baseUrl;
+  final String endpointPath;
   final StorageService storageService;
   final String modelName;
   final String prompt;
   final double temperature;
   final int maxTokens;
+  final bool isBuiltInKey;
   final AiReportAccessControl _accessControl = AiReportAccessControl();
 
   /// 构造函数
   EnhancedAiService({
     required this.apiKey,
+    required this.baseUrl,
+    required this.endpointPath,
     required this.storageService,
     required this.modelName,
     required this.prompt,
     double? temperature,
     int? maxTokens,
+    this.isBuiltInKey = false,
   })  : temperature = temperature ?? 0.7,
         maxTokens = maxTokens ?? 2048;
 
@@ -201,9 +214,19 @@ class EnhancedAiService {
       systemPrompt: systemPrompt,
     );
 
+    // 规范化 baseUrl 和 endpointPath 拼接
+    String urlStr = baseUrl;
+    if (urlStr.endsWith('/')) {
+      urlStr = urlStr.substring(0, urlStr.length - 1);
+    }
+    String pathStr = endpointPath;
+    if (!pathStr.startsWith('/')) {
+      pathStr = '/$pathStr';
+    }
+    
     final request = http.Request(
       'POST',
-      Uri.parse('https://api.siliconflow.cn/v1/chat/completions'),
+      Uri.parse('$urlStr$pathStr'),
     );
 
     request.headers.addAll({
@@ -217,9 +240,13 @@ class EnhancedAiService {
       'stream': true, // 启用流式响应
     });
 
-    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+    // 模型生成可能需要较长时间，特别是推理模型，因此将超时时间设置为 120 秒
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 120));
 
     if (streamedResponse.statusCode != 200) {
+      if (isBuiltInKey && (streamedResponse.statusCode == 401 || streamedResponse.statusCode == 429)) {
+        throw BuiltInKeyLimitException('免费通道暂时拥挤');
+      }
       final errorBody = await streamedResponse.stream.bytesToString();
       throw EnhancedAiServiceException(
         '${'API 请求失败'.tr}: ${streamedResponse.statusCode}\n$errorBody',

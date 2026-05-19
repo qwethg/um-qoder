@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ultimate_wheel/config/l10n.dart';
 
 enum AiProviderId {
+  glmFree,
   siliconflow,
   deepseek,
   kimi,
@@ -30,6 +31,14 @@ class AiProviderOption {
 }
 
 const List<AiProviderOption> aiProviderOptions = [
+  AiProviderOption(
+    id: AiProviderId.glmFree,
+    label: '智谱 GLM (免费内置通道)',
+    description: '无需填写 API Key，开箱即用，由 GLM-4.7-Flash 强力驱动。',
+    defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    defaultModel: 'glm-4.7-flash', 
+    endpointPath: '/chat/completions',
+  ),
   AiProviderOption(
     id: AiProviderId.siliconflow,
     label: '硅基流动',

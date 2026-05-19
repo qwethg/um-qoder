@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../models/ai_provider.dart';
+import '../utils/api_key_decoder.dart';
 
 class SettingsProvider with ChangeNotifier {
   final StorageService _storageService;
@@ -22,6 +23,7 @@ class SettingsProvider with ChangeNotifier {
 
 请按照以下结构输出你的分析（使用 Markdown 格式）：
 
+# 结合用户状态，给出精准有效有传播度的总结性的一个角色定义，格式是：什么什么的什么角色。如：容易心碎的场上盘霸
 ## 📊 总体评价
 - 对用户当前整体能力水平的综合评价（2-3句话）
 - 指出最突出的优势领域，
@@ -68,12 +70,12 @@ class SettingsProvider with ChangeNotifier {
   static const int _defaultMaxTokens = 2048;
   static const int _defaultCacheTtlDays = 30;
 
-  AiProviderId _providerId = AiProviderId.siliconflow;
+  AiProviderId _providerId = AiProviderId.glmFree;
   String _apiKey = '';
-  String _baseUrl = 'https://api.siliconflow.cn/v1';
+  String _baseUrl = 'https://open.bigmodel.cn/api/paas/v4';
   String _endpointPath = '/chat/completions';
 
-  String _modelName = _defaultModelName;
+  String _modelName = 'glm-4.7-flash';
   String _prompt = _defaultPrompt;
   double _temperature = _defaultTemperature;
   int _maxTokens = _defaultMaxTokens;
@@ -81,10 +83,32 @@ class SettingsProvider with ChangeNotifier {
 
   AiProviderId get providerId => _providerId;
   String get apiKey => _apiKey;
-  String get baseUrl => _baseUrl;
-  String get endpointPath => _endpointPath;
+  String get effectiveApiKey {
+    if (_providerId == AiProviderId.glmFree) {
+      return ApiKeyDecoder.getGlmFreeKey();
+    }
+    return _apiKey;
+  }
+  String get baseUrl {
+    if (_providerId == AiProviderId.glmFree) {
+      return getProviderOption(AiProviderId.glmFree).defaultBaseUrl;
+    }
+    return _baseUrl;
+  }
+  
+  String get endpointPath {
+    if (_providerId == AiProviderId.glmFree) {
+      return getProviderOption(AiProviderId.glmFree).endpointPath;
+    }
+    return _endpointPath;
+  }
 
-  String get modelName => _modelName;
+  String get modelName {
+    if (_providerId == AiProviderId.glmFree) {
+      return getProviderOption(AiProviderId.glmFree).defaultModel;
+    }
+    return _modelName;
+  }
   String get prompt => _prompt;
   double get temperature => _temperature;
   int get maxTokens => _maxTokens;
@@ -130,8 +154,8 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> _loadSettings() async {
-    final providerIdString = await _storageService.get(_providerIdKey, defaultValue: AiProviderId.siliconflow.name);
-    _providerId = AiProviderId.values.firstWhere((e) => e.name == providerIdString, orElse: () => AiProviderId.siliconflow);
+    final providerIdString = await _storageService.get(_providerIdKey, defaultValue: AiProviderId.glmFree.name);
+    _providerId = AiProviderId.values.firstWhere((e) => e.name == providerIdString, orElse: () => AiProviderId.glmFree);
     
     await _loadProviderSpecificSettings(isInitializing: true);
 

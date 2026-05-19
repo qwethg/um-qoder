@@ -52,6 +52,18 @@
   <title>Ultimate Wheel - 飞盘之轮 | 极限飞盘能力评估工具</title>
   <link rel="manifest" href="manifest.json">
   
+  <!-- 预加载 Material Icons (修复 Flutter Web 渲染图标变框的问题) -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  
+  <style>
+    /* 强制应用 Material Icons 字体 */
+    .material-icons, .material-icons-outlined, .material-icons-round {
+      font-family: 'Material Icons' !important;
+    }
+  </style>
+  
   <!-- 预加载关键资源 -->
   <link rel="preload" href="flutter.js" as="script">
   <link rel="preload" href="main.dart.js" as="script">

@@ -19,14 +19,17 @@ class AiService {
   late final EnhancedAiService _enhancedService;
   final SettingsProvider _settingsProvider;
 
-  AiService(this._storageService, this._settingsProvider, {required String apiKey}) {
+  AiService(this._storageService, this._settingsProvider, {required String apiKey, bool isBuiltInKey = false}) {
     _enhancedService = EnhancedAiService(
       apiKey: apiKey,
+      baseUrl: _settingsProvider.baseUrl,
+      endpointPath: _settingsProvider.endpointPath,
       storageService: _storageService,
       modelName: _settingsProvider.modelName,
       prompt: _settingsProvider.prompt,
       temperature: _settingsProvider.temperature,
       maxTokens: _settingsProvider.maxTokens,
+      isBuiltInKey: isBuiltInKey,
     );
   }
 

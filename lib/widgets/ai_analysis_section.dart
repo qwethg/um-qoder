@@ -14,6 +14,8 @@ import '../models/goal_setting.dart';
 import '../config/constants.dart';
 import 'package:ultimate_wheel/providers/settings_provider.dart';
 import '../models/ai_report.dart';
+import '../models/ai_provider.dart';
+import '../services/enhanced_ai_service.dart';
 
 /// AI 分析结果显示组件
 /// 支持三种状态：未生成、生成中、已生成
@@ -38,6 +40,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
   StreamSubscription<AiReport>? _subscription;
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -56,6 +59,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
   void dispose() {
     _subscription?.cancel();
     _animationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -95,6 +99,11 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
   Future<void> _generateAiAnalysis() async {
     setState(() {
       _isGenerating = true;
+      // 开始生成时自动展开，展示动态过程
+      if (!_isExpanded) {
+        _isExpanded = true;
+        _animationController.forward();
+      }
     });
 
     try {
@@ -106,7 +115,7 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
       final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
 
       // 检查 API Key
-      if (prefsProvider.apiKey.isEmpty) {
+      if (settingsProvider.effectiveApiKey.isEmpty) {
         throw Exception('请先在设置中配置 API Key'.tr);
       }
 
@@ -119,7 +128,13 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
         }
       }
 
-      final aiService = AiService(storageService, settingsProvider, apiKey: prefsProvider.apiKey);
+      final isBuiltIn = settingsProvider.providerId == AiProviderId.glmFree;
+      final aiService = AiService(
+        storageService, 
+        settingsProvider, 
+        apiKey: settingsProvider.effectiveApiKey,
+        isBuiltInKey: isBuiltIn,
+      );
       final reportStream = aiService.generateReport(
         assessment: widget.assessment,
         goalSettings: goalSettings,
@@ -136,6 +151,21 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
                 aiAnalysisContent: finalContent,
               );
               widget.onAssessmentUpdated(updatedAssessment);
+
+              // 自动滚动到底部以展示最新内容
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients) {
+                  final position = _scrollController.position;
+                  // 只有当用户没有向上滚动太多时，才自动滚动到底部
+                  if (position.maxScrollExtent - position.pixels < 150) {
+                    _scrollController.animateTo(
+                      position.maxScrollExtent,
+                      duration: const Duration(milliseconds: 100),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                }
+              });
             }
           });
         }
@@ -164,12 +194,40 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
     } catch (e) {
       // 显示错误提示
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('生成 AI 分析失败: $e'.tr),
-            backgroundColor: Colors.red,
-          ),
-        );
+        setState(() {
+          _isGenerating = false;
+        });
+
+        if (e is BuiltInKeyLimitException || e.toString().contains('免费通道暂时拥挤')) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('免费通道暂时拥挤 🥺'.tr),
+              content: Text('当前使用内置通道的小伙伴太多啦，或者该通道暂时不可用。\n\n您可以稍后再试，或者在设置中填入您自己的 API Key，获得更稳定、更私密的深度专属报告。'.tr),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('稍后再试'.tr),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    // 我们这里可以直接引导去设置页
+                    // Navigator.pop(context); // Note: we popped the context above
+                  },
+                  child: Text('去设置专属Key'.tr),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('生成 AI 分析失败: $e'.tr),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -186,6 +244,12 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
     if (mounted) {
       setState(() {
         _isGenerating = false;
+        final hasAnalysis = widget.assessment.aiAnalysisContent != null &&
+            widget.assessment.aiAnalysisContent!.trim().isNotEmpty;
+        if (!hasAnalysis && _isExpanded) {
+          _isExpanded = false;
+          _animationController.reverse();
+        }
       });
     }
   }
@@ -242,10 +306,11 @@ class _AiAnalysisSectionState extends State<AiAnalysisSection>
               ),
               
               // 展开的内容区域
-              if (hasAnalysis)
+              if (hasAnalysis || _isGenerating)
                 _ExpandedContentSection(
                   expandAnimation: _expandAnimation,
-                  analysisContent: widget.assessment.aiAnalysisContent!,
+                  analysisContent: widget.assessment.aiAnalysisContent ?? '',
+                  scrollController: _scrollController,
                 ),
               
               // 生成按钮（仅在未生成时显示）
@@ -380,10 +445,12 @@ class _HeaderSection extends StatelessWidget {
 class _ExpandedContentSection extends StatelessWidget {
   final Animation<double> expandAnimation;
   final String analysisContent;
+  final ScrollController scrollController;
 
   const _ExpandedContentSection({
     required this.expandAnimation,
     required this.analysisContent,
+    required this.scrollController,
   });
 
   @override
@@ -405,11 +472,13 @@ class _ExpandedContentSection extends StatelessWidget {
             ),
           ),
           child: Scrollbar(
+            controller: scrollController,
             child: SingleChildScrollView(
+              controller: scrollController,
               padding: const EdgeInsets.all(16),
               physics: const BouncingScrollPhysics(),
               child: MarkdownBody(
-                data: analysisContent,
+                data: analysisContent.isEmpty ? '等待分析结果...' : analysisContent,
                 styleSheet: MarkdownStyleSheet(
                   p: theme.textTheme.bodyMedium?.copyWith(
                     height: 1.6,
