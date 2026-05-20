@@ -120273,7 +120273,7 @@ j=A.l(a).ax
 s=j.d
 B.b.O(q,A.b([B.c1,A.baI(B.Rc,B.a9s,new A.aG1(a),A.tb(l,l,(s==null?j.b:s).ao(0.3),l,l,l,l,l,l,k.ax.b,l,l,B.rf,l,new A.cz(A.be(30),B.r),l,l,l,l,l))],o))}return new A.aD(B.fm,A.aU(q,B.p,B.bP,B.k),l)}}
 A.aG1.prototype={
-$0(){return A.mX(this.a,"/settings/guide?fromWelcome=true",t.X)},
+$0(){return A.mX(this.a,"/welcome/guide",t.X)},
 $S:0}
 A.ago.prototype={
 aEk(a,b){var s,r
