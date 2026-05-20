@@ -534,11 +534,14 @@ class _ComparisonScreenState extends State<ComparisonScreen> {
                 size: 16,
               ),
               const SizedBox(width: 4),
-              Text(
-                difference == 0 ? '0.0' : '${isImproved ? '+' : ''}${difference.toStringAsFixed(1)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: diffColor,
+              Expanded(
+                child: Text(
+                  difference == 0 ? '0.0' : '${isImproved ? '+' : ''}${difference.toStringAsFixed(1)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: diffColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

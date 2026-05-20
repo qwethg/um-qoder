@@ -100,6 +100,25 @@ class _UltimateWheelAppState extends State<UltimateWheelApp> {
             darkTheme: AppTheme.darkTheme,
             themeMode: prefs.themeMode,
             routerConfig: _router,
+            builder: (context, child) {
+              // 给整个应用添加最小宽度限制，在极端狭窄的窗口（如侧边栏）允许横向滚动，避免出现黄黑溢出条纹
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  const double minWidth = 360.0;
+                  if (constraints.maxWidth < minWidth) {
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: minWidth,
+                        height: constraints.maxHeight,
+                        child: child,
+                      ),
+                    );
+                  }
+                  return child!;
+                },
+              );
+            },
           );
         },
       ),

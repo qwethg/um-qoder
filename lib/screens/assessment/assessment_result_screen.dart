@@ -533,27 +533,47 @@ class _ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => context.go('/history'),
-            // 性能优化: 添加 const 关键字。
-            icon: const Icon(Icons.history),
-            label: Text('查看历史'.tr),
-          ),
-        ),
-        // 性能优化: 添加 const 关键字。
-        const SizedBox(width: 12),
-        Expanded(
-          child: FilledButton.icon(
-            onPressed: () => context.go('/home'),
-            // 性能优化: 添加 const 关键字。
-            icon: const Icon(Icons.home),
-            label: Text('回到首页'.tr),
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 350) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FilledButton.icon(
+                onPressed: () => context.go('/home'),
+                icon: const Icon(Icons.home),
+                label: Text('回到首页'.tr),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => context.go('/history'),
+                icon: const Icon(Icons.history),
+                label: Text('查看历史'.tr),
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => context.go('/history'),
+                icon: const Icon(Icons.history),
+                label: Text('查看历史'.tr),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: () => context.go('/home'),
+                icon: const Icon(Icons.home),
+                label: Text('回到首页'.tr),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

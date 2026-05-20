@@ -271,12 +271,14 @@ class _CategoryZenBlock extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  category.name.tr,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: 2.0,
-                    color: themeColor.withOpacity(0.8),
+                Expanded(
+                  child: Text(
+                    category.name.tr,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 2.0,
+                      color: themeColor.withOpacity(0.8),
+                    ),
                   ),
                 ),
               ],

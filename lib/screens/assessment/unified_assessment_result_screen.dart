@@ -181,47 +181,91 @@ class _ZenResultContentState extends State<_ZenResultContent> {
   }
 
   Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => context.go('/history'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 450) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FilledButton(
+                onPressed: () => context.go('/home'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.85),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: Text('完成'.tr, style: const TextStyle(fontWeight: FontWeight.w500)),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _isProcessing ? null : _handleShare,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                icon: _isProcessing 
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.share, size: 18),
+                label: Text('分享'.tr, style: const TextStyle(fontWeight: FontWeight.w400)),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => context.go('/history'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: Text('查看历史'.tr, style: const TextStyle(fontWeight: FontWeight.w400)),
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => context.go('/history'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: Text('查看历史'.tr, style: const TextStyle(fontWeight: FontWeight.w400)),
+              ),
             ),
-            child: Text('查看历史'.tr, style: const TextStyle(fontWeight: FontWeight.w400)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _isProcessing ? null : _handleShare,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _isProcessing ? null : _handleShare,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                icon: _isProcessing 
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.share, size: 18),
+                label: Text('分享'.tr, style: const TextStyle(fontWeight: FontWeight.w400)),
+              ),
             ),
-            icon: _isProcessing 
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.share, size: 18),
-            label: Text('分享'.tr, style: const TextStyle(fontWeight: FontWeight.w400)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: FilledButton(
-            onPressed: () => context.go('/home'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.85),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: () => context.go('/home'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.85),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: Text('完成'.tr, style: const TextStyle(fontWeight: FontWeight.w500)),
+              ),
             ),
-            child: Text('完成'.tr, style: const TextStyle(fontWeight: FontWeight.w500)),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
   

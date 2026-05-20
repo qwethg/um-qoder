@@ -244,12 +244,14 @@ class _AbilityCategorySection extends StatelessWidget {
               ),
               // 性能优化: 添加 const 关键字。
               const SizedBox(width: 12),
-              Text(
-                category.name.tr,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
+              Expanded(
+                child: Text(
+                  category.name.tr,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
               ),
             ],
           ),

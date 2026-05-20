@@ -395,12 +395,14 @@ class _ScoreField extends StatelessWidget {
             Icon(icon, size: 16, color: color),
             // 性能优化: 添加 const 关键字。
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
             ),
           ],
         ),
