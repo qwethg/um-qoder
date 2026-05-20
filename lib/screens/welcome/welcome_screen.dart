@@ -259,7 +259,7 @@ class WelcomePage extends StatelessWidget {
           if (showGuideButton) ...[
             const SizedBox(height: 32),
             TextButton.icon(
-              onPressed: () => context.push('/settings/guide?fromWelcome=true'),
+              onPressed: () => context.push('/welcome/guide'),
               icon: const Icon(Icons.menu_book_rounded, size: 18),
               label: const Text('第一次使用可以先阅读这里'),
               style: TextButton.styleFrom(
